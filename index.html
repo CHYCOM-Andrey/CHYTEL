@@ -299,15 +299,26 @@ function buildCategoryUI() {
     if (!Object.keys(db).length) { cont.innerHTML = "Словники не завантажені"; return; }
     cont.innerHTML = "<div style='display: contents; font-weight: bold; text-align: center;'><span style='text-align: left;'>Категорія</span><span>🎯 Ціль</span><span>Bg Фон</span><span>🗑️</span></div>";
     const s = {};
-    try { Object.assign(s, JSON.parse(localStorage.getItem("cfg_" + currentUser)) || {}); } catch(e){}
+    
+    // 🔥 ЗАХИСТ ВІД ЗБОЮ: якщо користувача ще немає, беремо пустий об'єкт, щоб сторінка не зависала
+    let uName = currentUser || "Андрійко";
+    try { Object.assign(s, JSON.parse(localStorage.getItem("cfg_" + uName)) || {}); } catch(e){}
+    
     Object.keys(db).forEach(k => {
         let ic = s.c ? s.c.includes(k) : true; let ib = s.bg ? s.bg.includes(k) : true;
-        cont.innerHTML += "<span style='text-align: left; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;'><b>" + k + "</b> (" + (userLearned[k]?userLearned[k].length:0) + "/" + Object.keys(userDifficult[k]||{}).length + "/" + db[k].length + ")</span>" +
+        
+        // 🔥 ЗАХИСТ ВІД ЗБОЮ: перевіряємо існування вкладених об'єктів для нового профілю
+        let learnedCount = userLearned && userLearned[k] ? userLearned[k].length : 0;
+        let diffCount = userDifficult && userDifficult[k] ? Object.keys(userDifficult[k]).length : 0;
+        let totalCount = db[k] ? db[k].length : 0;
+
+        cont.innerHTML += "<span style='text-align: left; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;'><b>" + k + "</b> (" + learnedCount + "/" + diffCount + "/" + totalCount + ")</span>" +
             "<input type='checkbox' name='cats' value='" + k + "' " + (ic?'checked':'') + " onchange='saveS()' style='width:18px; height:18px; margin:auto; cursor:pointer;'>" +
             "<input type='checkbox' name='bg_cats' value='" + k + "' " + (ib?'checked':'') + " onchange='saveS()' style='width:18px; height:18px; margin:auto; cursor:pointer;'>" +
             "<button class='btn-del-sm' onclick='deleteDictionary(\"" + k + "\")'>❌</button>";
     });
 }
+
 function saveS() { if (currentUser) saveUserFolder(); }
 function updateTheme() { document.getElementById('mainBody').className = 'theme-' + document.getElementById('thSel').value; }
 
