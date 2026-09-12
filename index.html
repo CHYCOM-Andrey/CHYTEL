@@ -151,6 +151,8 @@
 
 //3
 
+//3
+
 <script>
 let users = [], currentUser = "", db = {};
 let userLearned = {}, userDifficult = {}, usedBgPool = {};
@@ -188,13 +190,29 @@ function beep(f, d) {
 
 function initUserSystem() {
     try {
-        users = JSON.parse(localStorage.getItem('chicom_users_list') || "[]");
+        users = JSON.parse(localStorage.getItem('chicom_users_list'));
         currentUser = localStorage.getItem('chicom_current_user') || "";
     } catch (e) {
         users = ["Андрійко"]; currentUser = "Андрійко";
     }
-    if (!users || !users.length) { users = ["Андрійко"]; currentUser = "Андрійко"; }
-    rebuildUserSelect(); loadUserFolder(currentUser);
+    
+    // Захист від порожньої пам'яті: якщо масиву користувачів ще немає — створюємо його
+    if (!users || !Array.isArray(users) || !users.length) { 
+        users = ["Андрійко"]; currentUser = "Андрійко"; 
+        try {
+            localStorage.setItem('chicom_users_list', JSON.stringify(users));
+            localStorage.setItem('chicom_current_user', currentUser);
+        } catch(e){}
+    }
+    
+    // Гарантовано створюємо системні об'єкти про прогрес
+    db = db || {};
+    userLearned = userLearned || {};
+    userDifficult = userDifficult || {};
+    usedBgPool = usedBgPool || {};
+    
+    rebuildUserSelect(); 
+    loadUserFolder(currentUser);
 }
 
 function rebuildUserSelect() {
@@ -220,6 +238,8 @@ function switchUser() {
 
 //4
 
+//4
+
 function loadUserFolder(uName) {
     currentUser = uName;
     try {
@@ -233,7 +253,7 @@ function loadUserFolder(uName) {
             document.getElementById('rCount').value = s.r || 4; document.getElementById('thSel').value = s.th || 0; 
             document.getElementById('voiceToggle').checked = s.vt; 
             
-            // 🔥 ОНОВЛЕНО: Відновлення слухових налаштувань версії L
+            // Відновлення слухових налаштувань версії L
             if (document.getElementById('micListenToggle') && s.mlt !== undefined) {
                 document.getElementById('micListenToggle').checked = s.mlt;
             }
@@ -254,7 +274,6 @@ function saveUserFolder() {
     const cats = Array.from(document.querySelectorAll('input[name="cats"]:checked')).map(c => c.value);
     const bg = Array.from(document.querySelectorAll('input[name="bg_cats"]:checked')).map(c => c.value);
     
-    // 🔥 ОНОВЛЕНО: Зчитування слухових налаштувань для збереження
     const mlt = document.getElementById('micListenToggle') ? document.getElementById('micListenToggle').checked : true;
     const sls = document.getElementById('speechLangSel') ? document.getElementById('speechLangSel').value : "en-US";
     const mdt = document.getElementById('micDelayTime') ? parseInt(document.getElementById('micDelayTime').value) : 600;
@@ -264,7 +283,7 @@ function saveUserFolder() {
             p: currentUser, t: document.getElementById('tTime').value, s: document.getElementById('sTime').value,
             r: document.getElementById('rCount').value, th: document.getElementById('thSel').value,
             vt: document.getElementById('voiceToggle').checked, c: cats, bg: bg,
-            mlt: mlt, sls: sls, mdt: mdt // Збереження параметрів мікрофона в конфіг
+            mlt: mlt, sls: sls, mdt: mdt
         }));
         localStorage.setItem("learned_" + currentUser, JSON.stringify(userLearned));
         localStorage.setItem("diff_" + currentUser, JSON.stringify(userDifficult));
@@ -300,25 +319,22 @@ function buildCategoryUI() {
     cont.innerHTML = "<div style='display: contents; font-weight: bold; text-align: center;'><span style='text-align: left;'>Категорія</span><span>🎯 Ціль</span><span>Bg Фон</span><span>🗑️</span></div>";
     const s = {};
     
-    // 🔥 ЗАХИСТ ВІД ЗБОЮ: якщо користувача ще немає, беремо пустий об'єкт, щоб сторінка не зависала
     let uName = currentUser || "Андрійко";
     try { Object.assign(s, JSON.parse(localStorage.getItem("cfg_" + uName)) || {}); } catch(e){}
     
     Object.keys(db).forEach(k => {
         let ic = s.c ? s.c.includes(k) : true; let ib = s.bg ? s.bg.includes(k) : true;
         
-        // 🔥 ЗАХИСТ ВІД ЗБОЮ: перевіряємо існування вкладених об'єктів для нового профілю
         let learnedCount = userLearned && userLearned[k] ? userLearned[k].length : 0;
         let diffCount = userDifficult && userDifficult[k] ? Object.keys(userDifficult[k]).length : 0;
         let totalCount = db[k] ? db[k].length : 0;
 
         cont.innerHTML += "<span style='text-align: left; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;'><b>" + k + "</b> (" + learnedCount + "/" + diffCount + "/" + totalCount + ")</span>" +
-            "<input type='checkbox' name='cats' value='" + k + "' " + (ic?'checked':'') + " onchange='saveS()' style='width:18px; height:18px; margin:auto; cursor:pointer;'>" +
-            "<input type='checkbox' name='bg_cats' value='" + k + "' " + (ib?'checked':'') + " onchange='saveS()' style='width:18px; height:18px; margin:auto; cursor:pointer;'>" +
+            "<input type='checkbox' name='cats' value='" + k + "' " + (ic?'checked':'') + " onchange='saveS()' style='width:18px; height:18px; margin:auto; cursor:pointer;'>\n" +
+            "<input type='checkbox' name='bg_cats' value='" + k + "' " + (ib?'checked':'') + " onchange='saveS()' style='width:18px; height:18px; margin:auto; cursor:pointer;'>\n" +
             "<button class='btn-del-sm' onclick='deleteDictionary(\"" + k + "\")'>❌</button>";
     });
 }
-
 function saveS() { if (currentUser) saveUserFolder(); }
 function updateTheme() { document.getElementById('mainBody').className = 'theme-' + document.getElementById('thSel').value; }
 
@@ -342,6 +358,8 @@ function getBackgroundWords(cName) {
 }
 
 function markBgWordAsUsed(cName, w) { }
+
+//5
 
 //5
 
