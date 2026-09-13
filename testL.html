@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тестовий модуль розпізнавання мовлення v1.2</title>
+    <style>
+        body { background-color: #111; color: #fff; font-family: 'Segoe UI', sans-serif; text-align: center; padding: 20px; margin: 0; }
+        .container { max-width: 600px; background: #1a1a1a; margin: 20px auto; padding: 25px; border-radius: 12px; border: 1px solid #444; }
+        .word-display { font-size: 48px; font-weight: bold; margin: 30px 0; padding: 15px; border-radius: 8px; background: #222; min-height: 60px; transition: 0.3s; }
+        .status-idle { color: #fff; background: #222; }
+        .status-correct { color: #fff; background: #27ae60 !important; }
+        .status-wrong { color: #fff; background: #e74c3c !important; }
+        .status-timeout { color: #000; background: #f1c40f !important; }
+        .heard-text { font-size: 20px; color: #aaa; min-height: 30px; margin-top: 10px; font-style: italic; }
+        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: left; margin-bottom: 20px; font-size: 13px; }
+        .controls label { font-weight: bold; color: #f1c40f; }
+        .controls input { background: #333; color: #fff; border: 1px solid #555; padding: 6px; border-radius: 4px; width: 100%; box-sizing: border-box; margin-top: 4px; }
+        .btn { background: #27ae60; color: white; border: none; padding: 12px; width: 100%; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; text-transform: uppercase; margin-top: 10px; }
+        .btn:active { filter: brightness(0.8); }
+        #timer-display { font-size: 24px; font-weight: bold; color: #3498db; margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🎤 Модуль тестування мовлення (v1.2)</h2>
+    
+    <div class="controls">
+        <div>
+            <label>⏱️ Загальний час тесту (сек):</label>
+            <input type="number" id="testDuration" value="60">
+        </div>
+        <div>
+            <label>⏱️ Час на слово (сек):</label>
+            <input type="number" id="wordDuration" value="4">
+        </div>
+        <div>
+            <label>⚡ Латентна пауза мікрофона (мс):</label>
+            <input type="number" id="micDelay" value="600" step="100">
+        </div>
+        <div>
+            <label>📂 Словник (слова через кому):</label>
+            <input type="text" id="vocabInput" value="apple, мама, window, сонце, cat, хліб, book, дякую">
+        </div>
+    </div>
+
+    <button class="btn" id="startBtn" onclick="startTest()">Запустити тест</button>
+
+    <div id="test-zone" style="display:none; margin-top:20px;">
+        <div id="timer-display">Залишилось часу: -- сек</div>
+        <div id="word-box" class="word-display status-idle">---</div>
+        <div id="heard-box" class="heard-text">Очікування...</div>
+    </div>
+</div>
+
+<script>
+let vocab = [], currentWord = "";
+let testTimer = null, wordTimer = null, micDelayTimeout = null;
+let timeLeft = 0;
+let recognition = null;
+let isStepFinished = false;
+
+function detectLanguage(text) {
+    return /[a-zA-Z]/.test(text) ? 'en-US' : 'uk-UA';
+}
+
+function speakWord(text, callback) {
+    try {
+        let u = new SpeechSynthesisUtterance(text);
+        u.lang = detectLanguage(text);
+        u.rate = 0.9;
+        if (callback) {
+            u.onend = function() { callback(); };
+        }
+        window.speechSynthesis.speak(u);
+    } catch(e){
+        if (callback) callback();
+    }
+}
+
+function startTest() {
+    let rawVocab = document.getElementById('vocabInput').value;
+    vocab = rawVocab.split(',').map(function(w) { return w.trim(); }).filter(function(w) { return w.length > 0; });
+    if (!vocab.length) return alert("Додайте words у словник!");
+
+    document.getElementById('startBtn').style.display = 'none';
+    document.getElementById('test-zone').style.display = 'block';
+
+    timeLeft = parseInt(document.getElementById('testDuration').value) || 60;
+    document.getElementById('timer-display').innerText = "Залишилось часу: " + timeLeft + " сек";
+
+    testTimer = setInterval(function() {
+        timeLeft--;
+        document.getElementById('timer-display').innerText = "Залишилось часу: " + timeLeft + " сек";
+        if (timeLeft <= 0) { endTest(); }
+    }, 1000);
+
+    nextWord();
+}
+
+function nextWord() {
+    if (timeLeft <= 0) return;
+    
+    clearTimeout(wordTimer);
+    clearTimeout(micDelayTimeout);
+    if (recognition) { try { recognition.stop(); } catch(e){} }
+    
+    isStepFinished = false;
+    currentWord = vocab[Math.floor(Math.random() * vocab.length)];
+    
+    let box = document.getElementById('word-box');
+    box.innerText = currentWord.toUpperCase();
+    box.className = "word-display status-idle";
+    document.getElementById('heard-box').innerText = "⏳ Очікування латентної паузи...";
+
+    // 1. ЗАПУСКАЄТЬСЯ ЗАГАЛЬНИЙ ТАЙМЕР НА СЛОВО (наприклад, 4 сек)
+    let wordLimit = parseInt(document.getElementById('wordDuration').value) || 4;
+    wordTimer = setTimeout(function() {
+        if (isStepFinished) return;
+        isStepFinished = true;
+        if (recognition) { try { recognition.stop(); } catch(e){} }
+        
+        box.className = "word-display status-timeout";
+        document.getElementById('heard-box').innerText = "Пропуск (Таймаут)";
+        
+        // Після таймауту комп'ютер сам прочитує правильну версію
+        speakWord(currentWord, function() {
+            setTimeout(nextWord, 1000); // Перехід через 1 секунду після читання комп'ютером
+        });
+    }, wordLimit * 1000);
+
+    // 2. ВМИКАННЯ МІКРОФОНА СТРОГО ПІСЛЯ ЛАТЕНТНОЇ ПАУЗИ
+    let delayMs = parseInt(document.getElementById('micDelay').value) || 600;
+    micDelayTimeout = setTimeout(function() {
+        if (isStepFinished) return;
+        setupVoiceRecognition();
+    }, delayMs);
+}
+
+function setupVoiceRecognition() {
+    window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!window.SpeechRecognition) {
+        document.getElementById('heard-box').innerText = "Браузер не підтримує мікрофон!";
+        return;
+    }
+
+    recognition = new window.SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = detectLanguage(currentWord); // Мова підлаштовується автоматично
+
+    document.getElementById('heard-box').innerText = "🎤 Мікрофон увімкнено! Прочитайте слово...";
+
+    recognition.onresult = function(event) {
+        if (isStepFinished) return;
+        
+        let spoken = event.results[0].transcript.trim().toUpperCase();
+        spoken = spoken.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,""); // Очищення почутого тексту
+        
+        isStepFinished = true;
+        clearTimeout(wordTimer);
+        try { recognition.stop(); } catch(e){}
+
+        // Виводимо текстову версію того, як комп'ютер почув учня
+        document.getElementById('heard-box').innerText = "Ви сказали: \"" + spoken + "\"";
+
+        let box = document.getElementById('word-box');
+        
+        // Комп'ютер оцінює якість читання та підсвічує слово
+        if (spoken === currentWord.toUpperCase()) {
+            box.className = "word-display status-correct";
+        } else {
+            box.className = "word-display status-wrong";
+        }
+
+        // 3. ПІСЛЯ ОЦІНКИ КОМП'ЮТЕР САМ ПРОЧИТУЄ ПРАВИЛЬНУ ВЕРСІЮ СЛОВА
+        setTimeout(function() {
+            speakWord(currentWord, function() {
+                // Перехід до наступного завдання строго через 1 секунду після того, як комп'ютер договорив
+                setTimeout(nextWord, 1000);
+            });
+        }, 300); // Крихітна косметична пауза перед голосом комп'ютера
+    };
+
+    recognition.onerror = function() {
+        // Якщо мікрофон не розпізнав звук, чекаємо таймауту слова
+    };
+
+    try { recognition.start(); } catch(e){}
+}
+
+function endTest() {
+    clearInterval(testTimer);
+    clearTimeout(wordTimer);
+    clearTimeout(micDelayTimeout);
+    if (recognition) { try { recognition.stop(); } catch(e){} }
+    
+    document.getElementById('word-box').innerText = "ТЕСТ ЗАВЕРШЕНО";
+    document.getElementById('word-box').className = "word-display status-idle";
+    document.getElementById('heard-box').innerText = "Перезавантажте сторінку для повтору.";
+}
+</script>
+
+</body>
+</html>
