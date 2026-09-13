@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CHYCOM-L v70  Listening</title>
+    <title>CHYTEL-LSM v10</title>
     <style>
         :root { --bg: #ffffff; --text: #000000; --card-bg: #f0f4f8; --green: #27ae60; --red: #e74c3c; --orange: #e67e22; --gray: #7f8c8d; --border: #eeeeee; --blue: #2980b9; --yellow: #f1c40f; }
         .theme-0 { --bg: #ffffff; --text: #000000; --card-bg: #f0f4f8; }
@@ -48,6 +48,7 @@
         .bg-btn-skip { background-color: #f1c40f; color: black; }
         .bg-btn-no { background-color: #e74c3c; color: white; }  
         
+        /* 🔥 ОНОВЛЕНІ ТАБЛИЦІ: СВІТЛИЙ ТЕКСТ НА ТЕМНОМУ ТЛІ, БІЛЬШИЙ ШРИФТ */
         table { width: 100%; font-size: 13px; border-collapse: collapse; margin-top: 15px; background: #111111 !important; color: #ffffff !important; }
         th, td { border: 1px solid #444; padding: 8px; text-align: center; }
         th { background-color: #222222 !important; color: #f1c40f !important; font-weight: bold; }
@@ -64,12 +65,13 @@
     </style>
 </head>
 
-//2
+
+
 
 
 <body class="theme-0" id="mainBody">
 <div id="setup">
-    <h2 style="margin:0 0 10px 0;">CHYCOM-L v62  Listening</h2>
+    <h2 style="margin:0 0 10px 0;">CHYTEL-LSM v10</h2>
     <div style="display: flex; gap: 15px; text-align: left;">
         <div style="flex: 1;"><label>Учень:</label><select id="userSelect" onchange="switchUser()"></select></div>
         <div style="flex: 1;"><label>Нове ім'я:</label><input type="text" id="newPName" placeholder="Введіть..." oninput="checkNewUser()"></div>
@@ -84,28 +86,6 @@
         <div style="flex:1"><label>Слово (сек):</label><input type="number" id="sTime" value="5" onchange="saveS()"></div>
         <div style="flex:1"><label>Рядки:</label><input type="number" id="rCount" value="4" min="2" max="20" onchange="saveS()"></div>
     </div>
-
-    <!-- 🔥 ЕКОНОМНИЙ БЛОК ДЛЯ ВЕРСІЇ L (МІКРОФОН, МОВА ТА ЛАТЕНТНА ПАУЗА) -->
-    <div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; text-align: left; margin: 6px 0; font-size: 11px; background: rgba(52, 152, 219, 0.08); padding: 5px; border-radius: 5px; border: 1px solid rgba(52, 152, 219, 0.2);">
-        <label style="margin:0; cursor:pointer; display:flex; align-items:center; gap:4px; font-weight:normal;">
-            <input type="checkbox" id="micListenToggle" checked onchange="saveS()"> 🎤 Мікрофон
-        </label>
-        
-        <div style="display: flex; align-items: center; gap: 3px; margin: 0;">
-            <span style="font-size: 10px; font-weight: bold;">Мова:</span>
-            <select id="speechLangSel" style="font-size: 11px; padding: 1px 3px; width: auto; margin: 0; height: auto;" onchange="saveS()">
-                <option value="en-US">English (US)</option>
-                <option value="en-GB">English (UK)</option>
-                <option value="uk-UA">Українська</option>
-            </select>
-        </div>
-
-        <div style="display: flex; align-items: center; gap: 3px; margin: 0;">
-            <span style="font-size: 10px; font-weight: bold;">Пауза (мс):</span>
-            <input type="number" id="micDelayTime" value="600" min = "0" max="1500" step="100" style="font-size: 11px; padding: 1px 3px; width: 50px; margin: 0; height: auto; text-transform:none; text-align: center;" onchange="saveS()">
-        </div>
-    </div>
-
     <div style="display: flex; gap: 15px; align-items: center; margin-top: 10px;">
         <div style="flex: 1; text-align: left;"><select id="thSel" onchange="updateTheme(); saveS();"><option value="0">Біла схема</option><option value="1">Чорна</option><option value="2">Синя</option><option value="3">Зелена</option><option value="4">Голуба</option><option value="5">Нічна</option></select></div>
         <div style="flex: 1; text-align: left; padding-top: 10px;"><label style="cursor:pointer;"><input type="checkbox" id="voiceToggle" onchange="saveS()"> Голос підказок</label></div>
@@ -127,8 +107,9 @@
     <button class="btn-vocab" onclick="sendToVocabularyActive()">🗂️ До Словника Невідомих Слів</button>
 </div>
 
+<!-- 🔥 ЗБІЛЬШЕНІ НАЗВИ В ОДИН СУЦІЛЬНИЙ РЯДОК (white-space: nowrap) -->
 <div id="test-screen" class="hidden">
-    <h1 id="test-title" style="margin:0 auto 10px auto; font-size:18px; font-weight:bold; line-height:1.2; color:#ffffff; background:rgba(0,0,0,0.4); padding:4px 8px; border-radius:4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Чи були ці релевантні words у попередньому сеансі?</h1>
+    <h1 id="test-title" style="margin:0 auto 10px auto; font-size:18px; font-weight:bold; line-height:1.2; color:#ffffff; background:rgba(0,0,0,0.4); padding:4px 8px; border-radius:4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Чи були ці релевантні слова у попередньому сеансі?</h1>
     <div id="test-screen-counter" style="font-size:14px; font-weight:bold; margin-bottom:5px; color:var(--gray);">Екран 1 з 4</div>
     <div id="test-grid"></div>
     <div class="test-control-panel">
@@ -149,9 +130,8 @@
     <button class="btn-main" onclick="location.reload()">НА СТАРТОВИЙ ЕКРАН</button>
 </div>
 
-//3
 
-//3
+
 
 <script>
 let users = [], currentUser = "", db = {};
@@ -175,10 +155,6 @@ let testTimer = null;
 let focusTestResults = [];
 let peripheralTestResults = [];
 
-// 🔥 ЗМІННІ ДЛЯ СЛУХОВОГО РУШІЯ (ВЕРСІЯ L)
-let recognition = null;       // Об'єкт системного розпізнавання мовлення
-let micTimeout = null;        // Таймер захисної латентної паузи мікрофона
-
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 function beep(f, d) {
     try {
@@ -190,30 +166,16 @@ function beep(f, d) {
 
 function initUserSystem() {
     try {
-        users = JSON.parse(localStorage.getItem('chicom_users_list'));
+        users = JSON.parse(localStorage.getItem('chicom_users_list') || "[]");
         currentUser = localStorage.getItem('chicom_current_user') || "";
     } catch (e) {
         users = ["Андрійко"]; currentUser = "Андрійко";
     }
-    
-    // Захист від порожньої пам'яті: якщо масиву користувачів ще немає — створюємо його
-    if (!users || !Array.isArray(users) || !users.length) { 
-        users = ["Андрійко"]; currentUser = "Андрійко"; 
-        try {
-            localStorage.setItem('chicom_users_list', JSON.stringify(users));
-            localStorage.setItem('chicom_current_user', currentUser);
-        } catch(e){}
-    }
-    
-    // Гарантовано створюємо системні об'єкти про прогрес
-    db = db || {};
-    userLearned = userLearned || {};
-    userDifficult = userDifficult || {};
-    usedBgPool = usedBgPool || {};
-    
-    rebuildUserSelect(); 
-    loadUserFolder(currentUser);
+    if (!users || !users.length) { users = ["Андрійко"]; currentUser = "Андрійко"; }
+    rebuildUserSelect(); loadUserFolder(currentUser);
 }
+
+
 
 function rebuildUserSelect() {
     const sel = document.getElementById('userSelect'); if (!sel) return;
@@ -236,10 +198,6 @@ function switchUser() {
     document.getElementById('newPName').value = ""; loadUserFolder(currentUser);
 }
 
-//4
-
-//4
-
 function loadUserFolder(uName) {
     currentUser = uName;
     try {
@@ -252,17 +210,6 @@ function loadUserFolder(uName) {
             document.getElementById('tTime').value = s.t || 300; document.getElementById('sTime').value = s.s || 5; 
             document.getElementById('rCount').value = s.r || 4; document.getElementById('thSel').value = s.th || 0; 
             document.getElementById('voiceToggle').checked = s.vt; 
-            
-            // Відновлення слухових налаштувань версії L
-            if (document.getElementById('micListenToggle') && s.mlt !== undefined) {
-                document.getElementById('micListenToggle').checked = s.mlt;
-            }
-            if (document.getElementById('speechLangSel') && s.sls !== undefined) {
-                document.getElementById('speechLangSel').value = s.sls;
-            }
-            if (document.getElementById('micDelayTime') && s.mdt !== undefined) {
-                document.getElementById('micDelayTime').value = s.mdt;
-            }
         }
     } catch (e) {
         db = db || {}; userLearned = userLearned || {}; userDifficult = userDifficult || {}; usedBgPool = usedBgPool || {};
@@ -273,17 +220,11 @@ function loadUserFolder(uName) {
 function saveUserFolder() {
     const cats = Array.from(document.querySelectorAll('input[name="cats"]:checked')).map(c => c.value);
     const bg = Array.from(document.querySelectorAll('input[name="bg_cats"]:checked')).map(c => c.value);
-    
-    const mlt = document.getElementById('micListenToggle') ? document.getElementById('micListenToggle').checked : true;
-    const sls = document.getElementById('speechLangSel') ? document.getElementById('speechLangSel').value : "en-US";
-    const mdt = document.getElementById('micDelayTime') ? parseInt(document.getElementById('micDelayTime').value) : 600;
-
     try {
         localStorage.setItem("cfg_" + currentUser, JSON.stringify({
             p: currentUser, t: document.getElementById('tTime').value, s: document.getElementById('sTime').value,
             r: document.getElementById('rCount').value, th: document.getElementById('thSel').value,
-            vt: document.getElementById('voiceToggle').checked, c: cats, bg: bg,
-            mlt: mlt, sls: sls, mdt: mdt
+            vt: document.getElementById('voiceToggle').checked, c: cats, bg: bg
         }));
         localStorage.setItem("learned_" + currentUser, JSON.stringify(userLearned));
         localStorage.setItem("diff_" + currentUser, JSON.stringify(userDifficult));
@@ -318,20 +259,12 @@ function buildCategoryUI() {
     if (!Object.keys(db).length) { cont.innerHTML = "Словники не завантажені"; return; }
     cont.innerHTML = "<div style='display: contents; font-weight: bold; text-align: center;'><span style='text-align: left;'>Категорія</span><span>🎯 Ціль</span><span>Bg Фон</span><span>🗑️</span></div>";
     const s = {};
-    
-    let uName = currentUser || "Андрійко";
-    try { Object.assign(s, JSON.parse(localStorage.getItem("cfg_" + uName)) || {}); } catch(e){}
-    
+    try { Object.assign(s, JSON.parse(localStorage.getItem("cfg_" + currentUser)) || {}); } catch(e){}
     Object.keys(db).forEach(k => {
         let ic = s.c ? s.c.includes(k) : true; let ib = s.bg ? s.bg.includes(k) : true;
-        
-        let learnedCount = userLearned && userLearned[k] ? userLearned[k].length : 0;
-        let diffCount = userDifficult && userDifficult[k] ? Object.keys(userDifficult[k]).length : 0;
-        let totalCount = db[k] ? db[k].length : 0;
-
-        cont.innerHTML += "<span style='text-align: left; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;'><b>" + k + "</b> (" + learnedCount + "/" + diffCount + "/" + totalCount + ")</span>" +
-            "<input type='checkbox' name='cats' value='" + k + "' " + (ic?'checked':'') + " onchange='saveS()' style='width:18px; height:18px; margin:auto; cursor:pointer;'>\n" +
-            "<input type='checkbox' name='bg_cats' value='" + k + "' " + (ib?'checked':'') + " onchange='saveS()' style='width:18px; height:18px; margin:auto; cursor:pointer;'>\n" +
+        cont.innerHTML += "<span style='text-align: left; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;'><b>" + k + "</b> (" + (userLearned[k]?userLearned[k].length:0) + "/" + Object.keys(userDifficult[k]||{}).length + "/" + db[k].length + ")</span>" +
+            "<input type='checkbox' name='cats' value='" + k + "' " + (ic?'checked':'') + " onchange='saveS()' style='width:18px; height:18px; margin:auto; cursor:pointer;'>" +
+            "<input type='checkbox' name='bg_cats' value='" + k + "' " + (ib?'checked':'') + " onchange='saveS()' style='width:18px; height:18px; margin:auto; cursor:pointer;'>" +
             "<button class='btn-del-sm' onclick='deleteDictionary(\"" + k + "\")'>❌</button>";
     });
 }
@@ -361,10 +294,7 @@ function markBgWordAsUsed(cName, w) { }
 
 //5
 
-//5
-
-
-function loadUserFolde
+  //5
 
 let trainingDurationSetting = 300;
 
@@ -382,12 +312,12 @@ function startGame() {
     } else {
         const sel = document.getElementById('userSelect'); if (sel) currentUser = sel.value;
     }
-    const sel = Array.from(document.querySelectorAll('input[name="cats"]:checked')).map(c => c.value);
+    const sel = Array.from(document.querySelectorAll('input[name="cats"]:checked')).map(function(c) { return c.value; });
     if(!sel.length) return alert("Оберіть хоча б одну категорію для цілі пошуку (🎯 Ціль)!");
     saveUserFolder();
     catNow = sel[Math.floor(Math.random() * sel.length)]; 
     let targetList = getWordsFromSlidingWindow(catNow);
-    pool = [...targetList].sort(() => Math.random() - 0.5);
+    pool = [...targetList].sort(function() { return Math.random() - 0.5; });
     stats = {ok:0, err:0, skip:0}; 
     totalTasksCounter = 0;
     delayedQueue = []; 
@@ -399,19 +329,23 @@ function startGame() {
     trainingDurationSetting = parseInt(document.getElementById('tTime').value) || 300; 
     document.getElementById('g-timer').innerText = trainingDurationSetting;
     let t = trainingDurationSetting;
-    gT = setInterval(() => { t--; document.getElementById('g-timer').innerText = t; if(t<=0) finishTrainingSession(); }, 1000);
+    gT = setInterval(function() { t--; document.getElementById('g-timer').innerText = t; if(t<=0) finishTrainingSession(); }, 1000);
     next(true); 
 }
 
 function next(isFirst = false) {
-    beep(440, 0.08); // 🔥 Точкова правка: чіткий короткий звук старту завдання
+    beep(440, 0.08); 
     isWaitingAfterError = false; 
  
+    // Очищення прослуховування мікрофона з минулого кроку
+    if (micTimeout) { clearTimeout(micTimeout); }
+    if (recognition) { try { recognition.stop(); } catch(e){} }
+
     if (!isFirst) { totalTasksCounter++; } 
     let targetList = getWordsFromSlidingWindow(catNow);
-    if (!pool.length) { pool = [...targetList].sort(() => Math.random() - 0.5); }
+    if (!pool.length) { pool = [...targetList].sort(function() { return Math.random() - 0.5; }); }
     let isFromQueue = false;
-    let delayedIndex = delayedQueue.findIndex(q => q.triggerStep === totalTasksCounter);
+    let delayedIndex = delayedQueue.findIndex(function(q) { return q.triggerStep === totalTasksCounter; });
     if (delayedIndex !== -1) {
         targetW = delayedQueue[delayedIndex].word;
         delayedQueue.splice(delayedIndex, 1); 
@@ -425,21 +359,21 @@ function next(isFirst = false) {
     document.getElementById('target-instr').innerText = "ЗНАЙДИ: " + catNow.toUpperCase();
     const cont = document.getElementById('words-cont'); cont.innerHTML = '';
     let displaySet = [{w:targetW, ok:true}]; let backgroundWords = []; 
-    const bgSel = Array.from(document.querySelectorAll('input[name="bg_cats"]:checked')).map(c => c.value);
-    bgSel.forEach(c => { 
+    const bgSel = Array.from(document.querySelectorAll('input[name="bg_cats"]:checked')).map(function(c) { return c.value; });
+    bgSel.forEach(function(c) { 
         if(db[c]) { 
             let bgData = getBackgroundWords(c); 
-            let fBg = bgData.availableBg.filter(w => w.toLowerCase() !== targetW.toLowerCase()); 
-            backgroundWords = backgroundWords.concat(fBg.map(w => ({word: w, cat: c}))); 
+            let fBg = bgData.availableBg.filter(function(w) { return w.toLowerCase() !== targetW.toLowerCase(); }); 
+            backgroundWords = backgroundWords.concat(fBg.map(function(w) { return {word: w, cat: c}; })); 
         } 
     });
     if (backgroundWords.length === 0) {
-        backgroundWords = targetList.filter(w => w.toLowerCase() !== targetW.toLowerCase()).map(w => ({word: w, cat: catNow}));
+        backgroundWords = targetList.filter(function(w) { return w.toLowerCase() !== targetW.toLowerCase(); }).map(function(w) { return {word: w, cat: catNow}; });
     }
     let currentStepBgWords = []; let rCountVal = parseInt(document.getElementById('rCount').value) || 4;
     while(displaySet.length < rCountVal && backgroundWords.length > 0) {
         let rIndex = Math.floor(Math.random() * backgroundWords.length); let rObj = backgroundWords[rIndex];
-        if(!displaySet.find(x => x.w === rObj.word)) {
+        if(!displaySet.find(function(x) { return x.w === rObj.word; })) {
             displaySet.push({w:rObj.word, ok:false}); currentStepBgWords.push(rObj.word);
             if (!wordsSeenBackground.includes(rObj.word)) { wordsSeenBackground.push(rObj.word); }
             markBgWordAsUsed(rObj.cat, rObj.word); 
@@ -447,13 +381,22 @@ function next(isFirst = false) {
         backgroundWords.splice(rIndex, 1);
     }
     sessionProtocol.push({ step: totalTasksCounter + 1, type: isFromQueue ? "Черга (7/15)" : "Пул", target: targetW, bgWords: currentStepBgWords.join(", "), result: "Пропуск", time: 0 });
-    displaySet.sort(() => Math.random() - 0.5);
-    displaySet.forEach(o => {
+    displaySet.sort(function() { return Math.random() - 0.5; });
+
+    // Виводимо всі картки на екран (еталонна логіка v61 зберігається повністю)
+    displaySet.forEach(function(o) {
         const d = document.createElement('div'); d.className = 'word-card'; d.innerText = o.w; if(o.ok) d.id = "target-card";
-        d.onclick = () => { 
+        d.onclick = function() { 
             if (isWaitingAfterError) return;
-            let reactionTime = Math.round(performance.now() - wordStartTime);
+            
+            let currentElapsed = performance.now() - wordStartTime;
+            if (currentElapsed < 600) return; 
+            
+            let reactionTime = Math.round(currentElapsed);
             sessionProtocol[sessionProtocol.length - 1].time = reactionTime;
+            
+            if (recognition) { try { recognition.stop(); } catch(e){} }
+            
             if(o.ok) { sessionProtocol[sessionProtocol.length - 1].result = "Успіх"; handleSuccessWord(); } 
             else { sessionProtocol[sessionProtocol.length - 1].result = "Помилка"; handleProcessError(); } 
         };
@@ -461,7 +404,50 @@ function next(isFirst = false) {
     });
     const sT = parseInt(document.getElementById('sTime').value);
     document.getElementById('timer-runner').style.left = "0%"; wordStartTime = performance.now(); runTimer(sT, sT); 
+
+    // 🔥 СЛУХОВИЙ ФІЛЬТР: Мікрофон слухає паралельно і порівнює звук ТІЛЬКИ з цільовим targetW
+    const isMicOn = document.getElementById('micListenToggle') ? document.getElementById('micListenToggle').checked : true;
+    if (isMicOn) {
+        let delayMs = document.getElementById('micDelayTime') ? parseInt(document.getElementById('micDelayTime').value) : 600;
+        
+        micTimeout = setTimeout(function() {
+            if (isWaitingAfterError) return;
+            
+            window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!window.SpeechRecognition) return; 
+
+            recognition = new window.SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = /[a-zA-Z]/.test(targetW) ? 'en-US' : 'uk-UA';
+
+            recognition.onresult = function(event) {
+                if (isWaitingAfterError) return;
+                
+                if (event.results && event.results[0] && event.results[0][0]) {
+                    let spoken = event.results[0][0].transcript.trim().toUpperCase();
+                    spoken = spoken.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"").trim();
+
+                    // Комп'ютер реагує ТІЛЬКИ на чітке вимовлення релевантного слова
+                    if (spoken === targetW.toUpperCase()) {
+                        let voiceElapsed = performance.now() - wordStartTime;
+                        sessionProtocol[sessionProtocol.length - 1].time = Math.round(voiceElapsed);
+                        sessionProtocol[sessionProtocol.length - 1].type += " (Голос)";
+                        sessionProtocol[sessionProtocol.length - 1].result = "Успіх";
+                        
+                        if (recognition) { try { recognition.stop(); } catch(e){} }
+                        handleSuccessWord();
+                    }
+                }
+            };
+
+            try { recognition.start(); } catch(e){}
+        }, delayMs);
+    }
 }
+
+//6
+
 
 //6
 
@@ -504,7 +490,7 @@ function planDelayedWord(word) {
 function handleProcessError() {
     clearTimeout(pT); isWaitingAfterError = true; 
     
-    // 🔥 ОНОВЛЕНО ДЛЯ ВЕРСІЇ L: Негайно вимикаємо мікрофон на час показу червоної картки
+    // 🔥 ОНОВЛЕНО: Глушимо мікрофон на час показу червоної картки-паузи
     if (micTimeout) { clearTimeout(micTimeout); }
     if (recognition) { try { recognition.stop(); } catch(e){} }
 
@@ -521,8 +507,8 @@ function handleProcessError() {
 function sendToVocabularyActive() {
     if (isWaitingAfterError || !targetW) return;
     clearTimeout(pT); isWaitingAfterError = true; stats.skip++;
-
-    // 🔥 ОНОВЛЕНО ДЛЯ ВЕРСІЇ L: Вимикаємо мікрофон при скиданні слова у словник невідомих слів
+    
+    // 🔥 ОНОВЛЕНО: Вимикаємо мікрофон при ручному скиданні картки до словника невідомих слів
     if (micTimeout) { clearTimeout(micTimeout); }
     if (recognition) { try { recognition.stop(); } catch(e){} }
 
@@ -539,7 +525,7 @@ function sendToVocabularyActive() {
 function finishTrainingSession() {
     clearInterval(gT); clearTimeout(pT); document.getElementById('game').classList.add('hidden');
     
-    // 🔥 ОНОВЛЕНО ДЛЯ ВЕРСІЇ L: Повністю глушимо мікрофонний рушій при переході до контрольних тестів
+    // 🔥 ОНОВЛЕНО: Повністю відключаємо слуховий тракт при переході до контрольних тестів пам'яті
     if (micTimeout) { clearTimeout(micTimeout); }
     if (recognition) { try { recognition.stop(); } catch(e){} }
 
@@ -574,7 +560,6 @@ function finishTrainingSession() {
 }
 
 //7
-
 
 function renderTestScreen() {
     clearTimeout(testTimer);
@@ -640,7 +625,6 @@ function processTestAnswer(choice, isTimeout = false) {
 }
 
 //8
-
 
 //8
 
