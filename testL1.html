@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Тестовий модуль розпізнавання мовлення v1.3</title>
+    <title>Тестовий модуль розпізнавання мовлення v1.2</title>
     <style>
         body { background-color: #111; color: #fff; font-family: 'Segoe UI', sans-serif; text-align: center; padding: 20px; margin: 0; }
         .container { max-width: 600px; background: #1a1a1a; margin: 20px auto; padding: 25px; border-radius: 12px; border: 1px solid #444; }
@@ -24,7 +24,7 @@
 <body>
 
 <div class="container">
-    <h2>🎤 Модуль тестування мовлення (v1.3)</h2>
+    <h2>🎤 Модуль тестування мовлення (v1.2)</h2>
     
     <div class="controls">
         <div>
@@ -82,7 +82,7 @@ function speakWord(text, callback) {
 function startTest() {
     let rawVocab = document.getElementById('vocabInput').value;
     vocab = rawVocab.split(',').map(function(w) { return w.trim(); }).filter(function(w) { return w.length > 0; });
-    if (!vocab.length) return alert("Додайте слова у словник!");
+    if (!vocab.length) return alert("Додайте words у словник!");
 
     document.getElementById('startBtn').style.display = 'none';
     document.getElementById('test-zone').style.display = 'block';
@@ -114,7 +114,7 @@ function nextWord() {
     box.className = "word-display status-idle";
     document.getElementById('heard-box').innerText = "⏳ Очікування латентної паузи...";
 
-    // 1. Таймер загального таймауту на слово (Пропуск)
+    // 1. ЗАПУСКАЄТЬСЯ ЗАГАЛЬНИЙ ТАЙМЕР НА СЛОВО (наприклад, 4 сек)
     let wordLimit = parseInt(document.getElementById('wordDuration').value) || 4;
     wordTimer = setTimeout(function() {
         if (isStepFinished) return;
@@ -124,12 +124,13 @@ function nextWord() {
         box.className = "word-display status-timeout";
         document.getElementById('heard-box').innerText = "Пропуск (Таймаут)";
         
+        // Після таймауту комп'ютер сам прочитує правильну версію
         speakWord(currentWord, function() {
-            setTimeout(nextWord, 1000);
+            setTimeout(nextWord, 1000); // Перехід через 1 секунду після читання комп'ютером
         });
     }, wordLimit * 1000);
 
-    // 2. Увімкнення мікрофона строго після завершення заданої вами латентної паузи
+    // 2. ВМИКАННЯ МІКРОФОНА СТРОГО ПІСЛЯ ЛАТЕНТНОЇ ПАУЗИ
     let delayMs = parseInt(document.getElementById('micDelay').value) || 600;
     micDelayTimeout = setTimeout(function() {
         if (isStepFinished) return;
@@ -147,49 +148,43 @@ function setupVoiceRecognition() {
     recognition = new window.SpeechRecognition();
     recognition.continuous = false;
     recognition.interimResults = false;
-    recognition.lang = detectLanguage(currentWord);
+    recognition.lang = detectLanguage(currentWord); // Мова підлаштовується автоматично
 
     document.getElementById('heard-box').innerText = "🎤 Мікрофон увімкнено! Прочитайте слово...";
 
-    // 🔥 ВИПРАВЛЕНО: Повний інженерний шлях розбору подій Chrome (event.results[0][0])
     recognition.onresult = function(event) {
         if (isStepFinished) return;
         
-        if (event.results && event.results[0] && event.results[0][0]) {
-            let spoken = event.results[0][0].transcript.trim().toUpperCase();
-            
-            // Очищення почутого від зайвих знаків
-            spoken = spoken.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"").trim();
-            
-            // Виводимо текстову версію того, що впіймав мікрофон
-            document.getElementById('heard-box').innerText = "Ви сказали: \"" + spoken + "\"";
-            
-            isStepFinished = true;
-            clearTimeout(wordTimer);
-            try { recognition.stop(); } catch(e){}
+        let spoken = event.results[0].transcript.trim().toUpperCase();
+        spoken = spoken.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,""); // Очищення почутого тексту
+        
+        isStepFinished = true;
+        clearTimeout(wordTimer);
+        try { recognition.stop(); } catch(e){}
 
-            let box = document.getElementById('word-box');
-            
-            // Порівняння прочитаного з еталоном завдання та зміна кольору картки
-            if (spoken === currentWord.toUpperCase()) {
-                box.className = "word-display status-correct"; // Зелений
-            } else {
-                box.className = "word-display status-wrong";   // Червоний
-            }
+        // Виводимо текстову версію того, як комп'ютер почув учня
+        document.getElementById('heard-box').innerText = "Ви сказали: \"" + spoken + "\"";
 
-            // Комп'ютер демонструє правильну вимову, чекає 1 сек і йде далі
-            setTimeout(function() {
-                speakWord(currentWord, function() {
-                    setTimeout(nextWord, 1000);
-                });
-            }, 300);
+        let box = document.getElementById('word-box');
+        
+        // Комп'ютер оцінює якість читання та підсвічує слово
+        if (spoken === currentWord.toUpperCase()) {
+            box.className = "word-display status-correct";
+        } else {
+            box.className = "word-display status-wrong";
         }
+
+        // 3. ПІСЛЯ ОЦІНКИ КОМП'ЮТЕР САМ ПРОЧИТУЄ ПРАВИЛЬНУ ВЕРСІЮ СЛОВА
+        setTimeout(function() {
+            speakWord(currentWord, function() {
+                // Перехід до наступного завдання строго через 1 секунду після того, як комп'ютер договорив
+                setTimeout(nextWord, 1000);
+            });
+        }, 300); // Крихітна косметична пауза перед голосом комп'ютера
     };
 
-    recognition.onerror = function(event) {
-        if (event.error === 'not-allowed') {
-            document.getElementById('heard-box').innerText = "🚨 Доступ до мікрофона заблоковано системою!";
-        }
+    recognition.onerror = function() {
+        // Якщо мікрофон не розпізнав звук, чекаємо таймауту слова
     };
 
     try { recognition.start(); } catch(e){}
