@@ -133,6 +133,11 @@
 
 
 
+
+
+
+
+
 <script>
 let users = [], currentUser = "", db = {};
 let userLearned = {}, userDifficult = {}, usedBgPool = {};
@@ -155,6 +160,12 @@ let testTimer = null;
 let focusTestResults = [];
 let peripheralTestResults = [];
 
+// ГЛОБАЛЬНІ ЗМІННІ ДЛЯ СЛУХОВОГО РУШІЯ
+let recognition = null;       
+let micTimeout = null;        
+let isMicActiveGlobal = true; // Фіксація стану мікрофона на сеанс
+let micDelayGlobal = 600;     // Фіксація латентної паузи на сеанс
+
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 function beep(f, d) {
     try {
@@ -174,8 +185,6 @@ function initUserSystem() {
     if (!users || !users.length) { users = ["Андрійко"]; currentUser = "Андрійко"; }
     rebuildUserSelect(); loadUserFolder(currentUser);
 }
-
-
 
 function rebuildUserSelect() {
     const sel = document.getElementById('userSelect'); if (!sel) return;
@@ -197,6 +206,14 @@ function switchUser() {
     try { localStorage.setItem('chicom_current_user', currentUser); } catch(e){}
     document.getElementById('newPName').value = ""; loadUserFolder(currentUser);
 }
+
+//4
+
+
+
+
+
+
 
 function loadUserFolder(uName) {
     currentUser = uName;
@@ -294,7 +311,7 @@ function markBgWordAsUsed(cName, w) { }
 
 //5
 
-  //5
+//5
 
 let trainingDurationSetting = 300;
 
@@ -312,12 +329,18 @@ function startGame() {
     } else {
         const sel = document.getElementById('userSelect'); if (sel) currentUser = sel.value;
     }
-    const sel = Array.from(document.querySelectorAll('input[name="cats"]:checked')).map(function(c) { return c.value; });
+    const sel = Array.from(document.querySelectorAll('input[name="cats"]:checked')).map(c => c.value);
     if(!sel.length) return alert("Оберіть хоча б одну категорію для цілі пошуку (🎯 Ціль)!");
     saveUserFolder();
+
+    const micToggleEl = document.getElementById('micListenToggle');
+    isMicActiveGlobal = micToggleEl ? micToggleEl.checked : true;
+    const micDelayEl = document.getElementById('micDelayTime');
+    micDelayGlobal = micDelayEl ? (parseInt(micDelayEl.value) || 600) : 600;
+
     catNow = sel[Math.floor(Math.random() * sel.length)]; 
     let targetList = getWordsFromSlidingWindow(catNow);
-    pool = [...targetList].sort(function() { return Math.random() - 0.5; });
+    pool = [...targetList].sort(() => Math.random() - 0.5);
     stats = {ok:0, err:0, skip:0}; 
     totalTasksCounter = 0;
     delayedQueue = []; 
@@ -329,7 +352,7 @@ function startGame() {
     trainingDurationSetting = parseInt(document.getElementById('tTime').value) || 300; 
     document.getElementById('g-timer').innerText = trainingDurationSetting;
     let t = trainingDurationSetting;
-    gT = setInterval(function() { t--; document.getElementById('g-timer').innerText = t; if(t<=0) finishTrainingSession(); }, 1000);
+    gT = setInterval(() => { t--; document.getElementById('g-timer').innerText = t; if(t<=0) finishTrainingSession(); }, 1000);
     next(true); 
 }
 
@@ -337,15 +360,14 @@ function next(isFirst = false) {
     beep(440, 0.08); 
     isWaitingAfterError = false; 
  
-    // Очищення прослуховування мікрофона з минулого кроку
     if (micTimeout) { clearTimeout(micTimeout); }
     if (recognition) { try { recognition.stop(); } catch(e){} }
 
     if (!isFirst) { totalTasksCounter++; } 
     let targetList = getWordsFromSlidingWindow(catNow);
-    if (!pool.length) { pool = [...targetList].sort(function() { return Math.random() - 0.5; }); }
+    if (!pool.length) { pool = [...targetList].sort(() => Math.random() - 0.5); }
     let isFromQueue = false;
-    let delayedIndex = delayedQueue.findIndex(function(q) { return q.triggerStep === totalTasksCounter; });
+    let delayedIndex = delayedQueue.findIndex(q => q.triggerStep === totalTasksCounter);
     if (delayedIndex !== -1) {
         targetW = delayedQueue[delayedIndex].word;
         delayedQueue.splice(delayedIndex, 1); 
@@ -359,21 +381,21 @@ function next(isFirst = false) {
     document.getElementById('target-instr').innerText = "ЗНАЙДИ: " + catNow.toUpperCase();
     const cont = document.getElementById('words-cont'); cont.innerHTML = '';
     let displaySet = [{w:targetW, ok:true}]; let backgroundWords = []; 
-    const bgSel = Array.from(document.querySelectorAll('input[name="bg_cats"]:checked')).map(function(c) { return c.value; });
-    bgSel.forEach(function(c) { 
+    const bgSel = Array.from(document.querySelectorAll('input[name="bg_cats"]:checked')).map(c => c.value);
+    bgSel.forEach(c => { 
         if(db[c]) { 
             let bgData = getBackgroundWords(c); 
-            let fBg = bgData.availableBg.filter(function(w) { return w.toLowerCase() !== targetW.toLowerCase(); }); 
-            backgroundWords = backgroundWords.concat(fBg.map(function(w) { return {word: w, cat: c}; })); 
+            let fBg = bgData.availableBg.filter(w => w.toLowerCase() !== targetW.toLowerCase()); 
+            backgroundWords = backgroundWords.concat(fBg.map(w => ({word: w, cat: c}))); 
         } 
     });
     if (backgroundWords.length === 0) {
-        backgroundWords = targetList.filter(function(w) { return w.toLowerCase() !== targetW.toLowerCase(); }).map(function(w) { return {word: w, cat: catNow}; });
+        backgroundWords = targetList.filter(w => w.toLowerCase() !== targetW.toLowerCase()).map(w => ({word: w, cat: catNow}));
     }
     let currentStepBgWords = []; let rCountVal = parseInt(document.getElementById('rCount').value) || 4;
     while(displaySet.length < rCountVal && backgroundWords.length > 0) {
         let rIndex = Math.floor(Math.random() * backgroundWords.length); let rObj = backgroundWords[rIndex];
-        if(!displaySet.find(function(x) { return x.w === rObj.word; })) {
+        if(!displaySet.find(x => x.w === rObj.word)) {
             displaySet.push({w:rObj.word, ok:false}); currentStepBgWords.push(rObj.word);
             if (!wordsSeenBackground.includes(rObj.word)) { wordsSeenBackground.push(rObj.word); }
             markBgWordAsUsed(rObj.cat, rObj.word); 
@@ -381,12 +403,11 @@ function next(isFirst = false) {
         backgroundWords.splice(rIndex, 1);
     }
     sessionProtocol.push({ step: totalTasksCounter + 1, type: isFromQueue ? "Черга (7/15)" : "Пул", target: targetW, bgWords: currentStepBgWords.join(", "), result: "Пропуск", time: 0 });
-    displaySet.sort(function() { return Math.random() - 0.5; });
-
-    // Виводимо всі картки на екран (еталонна логіка v61 зберігається повністю)
-    displaySet.forEach(function(o) {
+    displaySet.sort(() => Math.random() - 0.5);
+    
+    displaySet.forEach(o => {
         const d = document.createElement('div'); d.className = 'word-card'; d.innerText = o.w; if(o.ok) d.id = "target-card";
-        d.onclick = function() { 
+        d.onclick = () => { 
             if (isWaitingAfterError) return;
             
             let currentElapsed = performance.now() - wordStartTime;
@@ -405,11 +426,7 @@ function next(isFirst = false) {
     const sT = parseInt(document.getElementById('sTime').value);
     document.getElementById('timer-runner').style.left = "0%"; wordStartTime = performance.now(); runTimer(sT, sT); 
 
-    // 🔥 СЛУХОВИЙ ФІЛЬТР: Мікрофон слухає паралельно і порівнює звук ТІЛЬКИ з цільовим targetW
-    const isMicOn = document.getElementById('micListenToggle') ? document.getElementById('micListenToggle').checked : true;
-    if (isMicOn) {
-        let delayMs = document.getElementById('micDelayTime') ? parseInt(document.getElementById('micDelayTime').value) : 600;
-        
+    if (isMicActiveGlobal) {
         micTimeout = setTimeout(function() {
             if (isWaitingAfterError) return;
             
@@ -424,11 +441,10 @@ function next(isFirst = false) {
             recognition.onresult = function(event) {
                 if (isWaitingAfterError) return;
                 
-                if (event.results && event.results[0] && event.results[0][0]) {
-                    let spoken = event.results[0][0].transcript.trim().toUpperCase();
+                if (event.results && event.results[event.results.length - 1]) {
+                    let spoken = event.results[event.results.length - 1][0].transcript.trim().toUpperCase();
                     spoken = spoken.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"").trim();
 
-                    // Комп'ютер реагує ТІЛЬКИ на чітке вимовлення релевантного слова
                     if (spoken === targetW.toUpperCase()) {
                         let voiceElapsed = performance.now() - wordStartTime;
                         sessionProtocol[sessionProtocol.length - 1].time = Math.round(voiceElapsed);
@@ -442,12 +458,11 @@ function next(isFirst = false) {
             };
 
             try { recognition.start(); } catch(e){}
-        }, delayMs);
+        }, micDelayGlobal);
     }
 }
 
 //6
-
 
 //6
 
