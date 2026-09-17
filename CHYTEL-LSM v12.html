@@ -479,7 +479,6 @@ function next(isFirst = false) {
                 
                 let lastIdx = event.results.length - 1;
                 if (event.results && event.results[lastIdx] && event.results[lastIdx][0]) {
-                    // 🔥 ПРАВИЛЬНИЙ ИНЖЕНЕРНИЙ ШЛЯХ: Додано точне зчитування тексту [0].transcript
                     let spoken = event.results[lastIdx][0].transcript.trim().toUpperCase();
                     spoken = spoken.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"").trim();
 
@@ -512,6 +511,7 @@ function next(isFirst = false) {
 }
 
 //6
+
 //6
 
 function handleSuccessWord() {
@@ -540,7 +540,20 @@ function runTimer(total, green) {
         stats.skip++; 
         sessionProtocol[sessionProtocol.length - 1].result = "Пропуск (Таймаут)"; 
         sessionProtocol[sessionProtocol.length - 1].time = msTotal;
-        handleProcessError(); 
+        
+        // 🔥 ТАЙМІНГ ПРОПУСКУ: При таймауті комп'ютер читає правильну версію, підсвічує рамку і чекає 2 секунди
+        if (micTimeout) { clearTimeout(micTimeout); }
+        if (recognition) { try { recognition.stop(); } catch(e){} }
+        
+        const card = document.getElementById('target-card'); if(card) card.classList.add('highlight-target');
+        isWaitingAfterError = true;
+        
+        computerSpeak(targetW, function() {
+            setTimeout(function() { 
+                if(card) card.classList.remove('highlight-target'); 
+                handleSuccessWord(); 
+            }, 2000);
+        });
     }, msTotal);
 }
 
@@ -552,8 +565,6 @@ function planDelayedWord(word) {
 
 function handleProcessError() {
     clearTimeout(pT); isWaitingAfterError = true; 
-    
-    // 🔥 ОНОВЛЕНО: Глушимо мікрофон на час показу червоної картки-паузи
     if (micTimeout) { clearTimeout(micTimeout); }
     if (recognition) { try { recognition.stop(); } catch(e){} }
 
@@ -564,14 +575,16 @@ function handleProcessError() {
     userDifficult[catNow][cleanTarget] = (currentWeight === 0) ? 3 : currentWeight + 2;
     planDelayedWord(targetW); saveUserFolder(); upUI();
     const card = document.getElementById('target-card'); if(card) card.classList.add('highlight-target');
-    setTimeout(function() { if(card) card.classList.remove('highlight-target'); next(); }, 2000);
+    
+    // 🔥 ТАЙМІНГ ПОМИЛКИ: Комп'ютер читає еталон і тримає червону картку рівно 2 секунди після промови
+    computerSpeak(targetW, function() {
+        setTimeout(function() { if(card) card.classList.remove('highlight-target'); next(); }, 2000);
+    });
 }
 
 function sendToVocabularyActive() {
     if (isWaitingAfterError || !targetW) return;
     clearTimeout(pT); isWaitingAfterError = true; stats.skip++;
-    
-    // 🔥 ОНОВЛЕНО: Вимикаємо мікрофон при ручному скиданні картки до словника невідомих слів
     if (micTimeout) { clearTimeout(micTimeout); }
     if (recognition) { try { recognition.stop(); } catch(e){} }
 
@@ -582,13 +595,14 @@ function sendToVocabularyActive() {
     userDifficult[catNow][cleanTarget] = (currentWeight === 0) ? 3 : currentWeight + 2;
     planDelayedWord(targetW); saveUserFolder(); upUI();
     const card = document.getElementById('target-card'); if(card) card.classList.add('highlight-target');
-    setTimeout(function() { if(card) card.classList.remove('highlight-target'); next(); }, 1200);
+    
+    computerSpeak(targetW, function() {
+        setTimeout(function() { if(card) card.classList.remove('highlight-target'); next(); }, 1200);
+    });
 }
 
 function finishTrainingSession() {
     clearInterval(gT); clearTimeout(pT); document.getElementById('game').classList.add('hidden');
-    
-    // 🔥 ОНОВЛЕНО: Повністю відключаємо слуховий тракт при переході до контрольних тестів пам'яті
     if (micTimeout) { clearTimeout(micTimeout); }
     if (recognition) { try { recognition.stop(); } catch(e){} }
 
