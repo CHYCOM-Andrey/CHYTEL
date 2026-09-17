@@ -329,16 +329,16 @@ function detectLanguage(text) {
 
 function computerSpeak(text, callback) {
     try {
-        window.speechSynthesis.cancel(); // Скидаємо попередні голосові черги, щоб не було затримок
+        window.speechSynthesis.cancel(); 
         let utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = detectLanguage(text);
-        utterance.rate = 0.85; // Трохи уповільнена, чітка вимова для навчання
+        utterance.rate = 0.85; 
         if (callback) {
             utterance.onend = function() { callback(); };
         }
         window.speechSynthesis.speak(utterance);
     } catch(e) {
-        if (callback) callback(); // Якщо на ПК вимкнено звуковий рушій — просто йдемо далі
+        if (callback) callback(); 
     }
 }
 
@@ -390,7 +390,6 @@ function next(isFirst = false) {
     if (micTimeout) { clearTimeout(micTimeout); }
     if (recognition) { try { recognition.stop(); } catch(e){} }
 
-    // Скидаємо текст монітора почутого на початку кожного кроку
     const monitor = document.getElementById('mic-heard-monitor');
     if (monitor) monitor.innerText = "Очікування вимови...";
 
@@ -451,7 +450,6 @@ function next(isFirst = false) {
             
             if(o.ok) { 
                 sessionProtocol[sessionProtocol.length - 1].result = "Успіх"; 
-                // Еталонний голос при кліку мишкою: проговорюємо та йдемо далі
                 computerSpeak(targetW, function() { handleSuccessWord(); });
             } 
             else { 
@@ -472,35 +470,33 @@ function next(isFirst = false) {
             if (!window.SpeechRecognition) return; 
 
             recognition = new window.SpeechRecognition();
-            recognition.continuous = true; // Дозволяє ловити проміжні спроби вимови
+            recognition.continuous = true; 
             recognition.interimResults = false;
             recognition.lang = detectLanguage(targetW);
 
             recognition.onresult = function(event) {
                 if (isWaitingAfterError) return;
                 
-                if (event.results && event.results[event.results.length - 1]) {
-                    let spoken = event.results[event.results.length - 1].transcript.trim().toUpperCase();
+                let lastIdx = event.results.length - 1;
+                if (event.results && event.results[lastIdx] && event.results[lastIdx][0]) {
+                    // 🔥 ПРАВИЛЬНИЙ ИНЖЕНЕРНИЙ ШЛЯХ: Додано точне зчитування тексту [0].transcript
+                    let spoken = event.results[lastIdx][0].transcript.trim().toUpperCase();
                     spoken = spoken.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"").trim();
 
-                    // 1. Оновлюємо монітор на екрані літерами почутого слова
                     if (monitor) { monitor.innerText = "Почув: \"" + spoken + "\""; }
 
-                    // 2. Якщо учень вимовив цільове слово абсолютно вірно
                     if (spoken === targetW.toUpperCase()) {
                         let voiceElapsed = performance.now() - wordStartTime;
                         sessionProtocol[sessionProtocol.length - 1].time = Math.round(voiceElapsed);
                         sessionProtocol[sessionProtocol.length - 1].type += " (Голос)";
                         sessionProtocol[sessionProtocol.length - 1].result = "Успіх";
                         
-                        isWaitingAfterError = true; // Захисний блок, щоб учень не клікав під час промови комп'ютера
+                        isWaitingAfterError = true; 
                         if (recognition) { try { recognition.stop(); } catch(e){} }
                         
-                        // Підсвічуємо цільову картку зеленим кольором для візуального звіту
                         const targetCard = document.getElementById('target-card');
                         if (targetCard) targetCard.style.backgroundColor = "var(--green)";
 
-                        // Комп'ютер вимовляє еталон, чекає 1 секунду й перемикає завдання
                         setTimeout(function() {
                             computerSpeak(targetW, function() {
                                 setTimeout(function() { handleSuccessWord(); }, 1000);
