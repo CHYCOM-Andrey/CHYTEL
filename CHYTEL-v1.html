@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CHYTEL v1</title>
+    <style>
+        :root { --bg: #ffffff; --text: #000000; --card-bg: #f0f4f8; --green: #27ae60; --red: #e74c3c; --orange: #e67e22; --gray: #7f8c8d; --border: #eeeeee; --blue: #2980b9; --yellow: #f1c40f; }
+        .theme-0 { --bg: #ffffff; --text: #000000; --card-bg: #f0f4f8; }
+        .theme-1 { --bg: #000000; --text: #ffffff; --card-bg: #1a1a1a; }
+        .theme-2 { --bg: rgb(0,0,100); --text: rgb(250,250,220); --card-bg: rgb(0,0,80); }
+        .theme-3 { --bg: rgb(0,30,0); --text: rgb(250,250,220); --card-bg: rgb(0,20,0); }
+        .theme-4 { --bg: rgb(10,80,120); --text: #ffffff; --card-bg: rgb(10,70,100); }
+        .theme-5 { --bg: #1a1a1a; --text: #ecf0f1; --card-bg: #2c3e50; }
+        
+        body { background-color: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 1vh 15px; box-sizing: border-box; }
+        #setup, #game, #test-screen, #final-stats { background: rgba(128, 128, 128, 0.05); padding: 20px; border-radius: 15px; width: 100%; max-width: 850px; border: 1px solid var(--gray); text-align: center; box-sizing: border-box; margin: 0.5vh auto; }
+        .hidden { display: none; }
+        #setup label { font-size: 10px; font-weight: bold; display: block; margin-top: 10px; text-align: left; }
+
+        #setup input, #setup select { font-size: 16px; padding: 10px; margin-top: 5px; border-radius: 6px; border: 1px solid #ccc; width: 100%; box-sizing: border-box; }
+        #catBox { display: grid; grid-template-columns: 2fr 0.8fr 0.8fr 0.5fr; align-items: center; gap: 5px; font-size: 12px; background: rgba(255,255,255,0.3); padding: 10px; border-radius: 8px; margin-top: 5px; max-height: 250px; overflow-y: auto; color: var(--text); }
+        #progress-wrap { width: 100%; height: 20px; background: #eee; border-radius: 10px; overflow: hidden; margin: 15px 0; position: relative; border: 1px solid #ccc; display: flex; }
+        #zone-green { height: 100%; background: var(--green); opacity: 0.4; }
+        #zone-red { height: 100%; background: var(--red); opacity: 0.4; }
+        #timer-runner { position: absolute; top:0; left:0; height:100%; width:6px; background:var(--text); z-index: 5; }
+        
+        #words-cont { display: flex; flex-direction: column; gap: 1.2vh; margin-top: 2vh; }
+        .word-card { background-color: var(--card-bg); color: var(--text); font-weight: bold; padding: 2.2vh 18px; border-radius: 8px; border: 1px solid var(--border); cursor: pointer; text-transform: uppercase; text-align: center; font-size: 20px; transition: 0.1s; line-height: 1; }
+        .word-card:hover { filter: brightness(0.9); }
+        .highlight-target { border: 4px solid var(--red) !important; background-color: rgba(231, 76, 60, 0.1) !important; }
+        
+        #test-grid { display: flex; flex-direction: column; gap: 1vh; margin: 2vh 0; }
+        .test-row { padding: 1.8vh 14px; border-radius: 6px; font-size: 18px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; border: 2px solid #ffffff; color: #ffffff; text-align: center; transition: background-color 0.2s, color 0.1s; line-height: 1; }
+        
+        .row-relevant { background-color: #0a2540 !important; }   
+        .row-peripheral { background-color:#075e32 !important; }
+        .row-active { border-color: var(--yellow) !important; color: var(--yellow) !important; }
+        
+        .ans-correct { background-color: #2ecc71 !important; color: #ffffff !important; border-color: #2ecc71 !important; } 
+        .ans-wrong { background-color: #e74c3c !important; color: #ffffff !important; border-color: #e74c3c !important; }   
+        .ans-dontknow { background-color: #f1c40f !important; color: #000000 !important; border-color: #f1c40f !important; }
+
+        .test-control-panel { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 2vh; }
+        .btn-action-test { padding: 2vh 10px; font-size: 18px; font-weight: bold; border-radius: 8px; border: none; cursor: pointer; color: white; text-transform: uppercase; }
+        .btn-action-test:active { filter: brightness(0.8); }
+        .bg-btn-yes { background-color: #2ecc71; color: white; } 
+        .bg-btn-skip { background-color: #f1c40f; color: black; }
+        .bg-btn-no { background-color: #e74c3c; color: white; }  
+        
+        /* 🔥 ОНОВЛЕНІ ТАБЛИЦІ: СВІТЛИЙ ТЕКСТ НА ТЕМНОМУ ТЛІ, БІЛЬШИЙ ШРИФТ */
+        table { width: 100%; font-size: 13px; border-collapse: collapse; margin-top: 15px; background: #111111 !important; color: #ffffff !important; }
+        th, td { border: 1px solid #444; padding: 8px; text-align: center; }
+        th { background-color: #222222 !important; color: #f1c40f !important; font-weight: bold; }
+        
+        .btn-main { background: var(--green); color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; font-size: 18px; cursor: pointer; font-weight: bold; margin-top: 15px; }
+        .btn-file { background: #3498db; color: white; border: none; padding: 10px; width: 100%; border-radius: 6px; font-size: 14px; cursor: pointer; font-weight: bold; margin-top: 5px; }
+        .btn-del-sm { background: none; color: #e74c3c; border: none; font-size: 16px; cursor: pointer; font-weight: bold; padding: 0; }
+        .btn-vocab { background: var(--orange); color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; font-size: 18px; cursor: pointer; font-weight: bold; margin-top: 15px; text-transform: uppercase; }
+        .btn-export { background: #9b59b6; color: white; border: none; padding: 10px; width: 100%; border-radius: 6px; font-size: 14px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        .stat-block { text-align: left; background: rgba(128,128,128,0.1); padding: 12px; border-radius: 8px; margin-bottom: 15px; }
+        
+        .stat-title { font-weight: bold; font-size: 16px; color: #f1c40f; margin-bottom: 5px; text-transform: uppercase; }
+        .light-heading { color: #f1c40f !important; font-weight: bold; text-transform: uppercase; }
+    </style>
+</head>
+
+
+
+
+
+<body class="theme-0" id="mainBody">
+<div id="setup">
+    <h2 style="margin:0 0 10px 0;">CHYTEL v1</h2>
+    <div style="display: flex; gap: 15px; text-align: left;">
+        <div style="flex: 1;"><label>Учень:</label><select id="userSelect" onchange="switchUser()"></select></div>
+        <div style="flex: 1;"><label>Нове ім'я:</label><input type="text" id="newPName" placeholder="Введіть..." oninput="checkNewUser()"></div>
+    </div>
+    <div style="display: flex; gap: 10px; margin-top: 10px;">
+        <div style="flex:1;"><input type="file" id="fileInput" multiple accept=".txt" style="display:none" onchange="handleFileSelect(this)"><button class="btn-file" onclick="document.getElementById('fileInput').click()">📂 Завантажити словники</button></div>
+        <div style="flex:1;"><button class="btn-export" onclick="exportDictionary()">📥 Зберегти складні слова у файл</button></div>
+    </div>
+    <div id="catBox">Словники не завантажені</div>
+    <div style="display:flex; gap:10px;">
+        <div style="flex:1"><label>Сеанс (сек):</label><input type="number" id="tTime" value="300" onchange="saveS()"></div>
+        <div style="flex:1"><label>Слово (сек):</label><input type="number" id="sTime" value="5" onchange="saveS()"></div>
+        <div style="flex:1"><label>Рядки:</label><input type="number" id="rCount" value="4" min="2" max="20" onchange="saveS()"></div>
+    </div>
+    <div style="display: flex; gap: 15px; align-items: center; margin-top: 10px;">
+        <div style="flex: 1; text-align: left;"><select id="thSel" onchange="updateTheme(); saveS();"><option value="0">Біла схема</option><option value="1">Чорна</option><option value="2">Синя</option><option value="3">Зелена</option><option value="4">Голуба</option><option value="5">Нічна</option></select></div>
+        <div style="flex: 1; text-align: left; padding-top: 10px;"><label style="cursor:pointer;"><input type="checkbox" id="voiceToggle" onchange="saveS()"> Голос підказок</label></div>
+    </div>
+    <button class="btn-main" onclick="startGame()">ПОЧАТИ ТРЕНУВАННЯ</button>
+</div>
+
+
+
+<div id="game" class="hidden">
+    <div style="display:flex; justify-content: space-around; font-weight:bold; font-size:22px; margin-bottom:10px;">
+        <span style="color:var(--green)">✅ <span id="cnt-ok">0</span></span>
+        <span style="color:var(--orange)">❌ <span id="cnt-err">0</span></span>
+        <span style="color:var(--gray)">⏳ <span id="cnt-skip">0</span></span>
+        <span id="g-timer">300</span>
+    </div>
+    <div id="progress-wrap"><div id="zone-green"></div><div id="zone-red" style="width:30%;"></div><div id="timer-runner"></div></div>
+    
+    <!-- 🔥 НОВЕ ВІКНО: Показує літерами те, що комп'ютер почув від учня -->
+    <div id="mic-heard-monitor" style="font-size: 18px; font-style: italic; color: #3498db; margin-bottom: 10px; min-height: 24px; font-weight: bold;">Комп'ютер слухає...</div>
+
+    <div id="target-instr" style="font-weight:bold; font-size:22px; margin-bottom:15px; color:var(--red); text-transform: uppercase;"></div>
+    
+    <div id="words-cont"></div>
+    <button class="btn-vocab" onclick="sendToVocabularyActive()">🗂️ До Словника Невідомих Слів</button>
+</div>
+
+
+
+<!-- 🔥 ЗБІЛЬШЕНІ НАЗВИ В ОДИН СУЦІЛЬНИЙ РЯДОК (white-space: nowrap) -->
+<div id="test-screen" class="hidden">
+    <h1 id="test-title" style="margin:0 auto 10px auto; font-size:18px; font-weight:bold; line-height:1.2; color:#ffffff; background:rgba(0,0,0,0.4); padding:4px 8px; border-radius:4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Чи були ці релевантні слова у попередньому сеансі?</h1>
+    <div id="test-screen-counter" style="font-size:14px; font-weight:bold; margin-bottom:5px; color:var(--gray);">Екран 1 з 4</div>
+    <div id="test-grid"></div>
+    <div class="test-control-panel">
+        <button class="btn-action-test bg-btn-yes" onclick="pressTestButton(1)">БУЛИ</button>
+        <button class="btn-action-test bg-btn-skip" onclick="pressTestButton(3)">НЕ ПАМ’ЯТАЮ</button>
+        <button class="btn-action-test bg-btn-no" onclick="pressTestButton(2)">НЕ БУЛО</button>
+    </div>
+</div>
+
+<div id="final-stats" class="hidden">
+    <h2 style="margin:0 0 15px 0;">Результати сеансу тренування</h2>
+    <h3 style="margin:0 0 15px 0; text-align:left;">Учень: <span id="res-user-name"></span></h3>
+    <div id="testResultsContainer"></div>
+    <h3 class="light-heading" style="margin:20px 0 5px 0; text-align:left;">🔬 Протокол сеансу</h3>
+    <div id="protocolTableContainer" style="overflow-x:auto; max-height: 400px; overflow-y: auto; border: 1px solid #ccc; border-radius: 8px;"></div>
+    <h3 class="light-heading" style="margin:25px 0 5px 0; text-align:left;">📜 Історія попередніх сеансів</h3>
+    <div id="historyTableContainer" style="overflow-x:auto;"></div>
+    <button class="btn-main" onclick="location.reload()">НА СТАРТОВИЙ ЕКРАН</button>
+</div>
+
+
+
+<script>
+let users = [], currentUser = "", db = {};
+let userLearned = {}, userDifficult = {}, usedBgPool = {};
+let pool = [], catNow = "", targetW = "";
+let stats = {ok:0, err:0, skip:0}, gT, pT, isWaitingAfterError = false;
+
+let totalTasksCounter = 0, delayedQueue = [];
+let wordStartTime = 0, sessionProtocol = [];
+
+let wordsSeenTarget = [], wordsSeenBackground = [];
+
+let allMemoryTestWords = []; 
+let totalTestScreens = 4;     
+let currentScreenIndex = 0;   
+let currentWordIndexInScreen = 0; 
+let currentScreenWords = [];  
+let currentTestMode = "";     
+let testWordStartTime = 0;
+let testTimer = null;         
+let focusTestResults = [];
+let peripheralTestResults = [];
+
+// ГЛОБАЛЬНІ ЗМІННІ ДЛЯ СЛУХОВОГО РУШІЯ
+let recognition = null;       
+let micTimeout = null;        
+let isMicActiveGlobal = true; // Фіксація стану мікрофона на сеанс
+let micDelayGlobal = 600;     // Фіксація латентної паузи на сеанс
+
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function beep(f, d) {
+    try {
+        const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
+        o.type='sine'; o.frequency.value=f; g.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+d);
+    } catch(e) {}
+}
+
+function initUserSystem() {
+    try {
+        users = JSON.parse(localStorage.getItem('chicom_users_list') || "[]");
+        currentUser = localStorage.getItem('chicom_current_user') || "";
+    } catch (e) {
+        users = ["Андрійко"]; currentUser = "Андрійко";
+    }
+    if (!users || !users.length) { users = ["Андрійко"]; currentUser = "Андрійко"; }
+    rebuildUserSelect(); loadUserFolder(currentUser);
+}
+
+function rebuildUserSelect() {
+    const sel = document.getElementById('userSelect'); if (!sel) return;
+    sel.innerHTML = "";
+    users.forEach(u => {
+        const opt = document.createElement('option'); opt.value = u; opt.innerText = "📁 " + u;
+        if (u === currentUser) opt.selected = true;
+        sel.appendChild(opt);
+    });
+}
+
+function checkNewUser() {
+    const val = document.getElementById('newPName').value.trim();
+    if(document.getElementById('userSelect')) document.getElementById('userSelect').disabled = val.length > 0;
+}
+
+function switchUser() {
+    currentUser = document.getElementById('userSelect').value;
+    try { localStorage.setItem('chicom_current_user', currentUser); } catch(e){}
+    document.getElementById('newPName').value = ""; loadUserFolder(currentUser);
+}
+
+//4
+
+
+
+
+function loadUserFolder(uName) {
+    currentUser = uName;
+    try {
+        db = JSON.parse(localStorage.getItem('trainer_custom_db') || "{}");
+        userLearned = JSON.parse(localStorage.getItem("learned_" + uName) || "{}");
+        userDifficult = JSON.parse(localStorage.getItem("diff_" + uName) || "{}");
+        usedBgPool = JSON.parse(localStorage.getItem("bgpool_" + uName) || "{}");
+        const s = JSON.parse(localStorage.getItem("cfg_" + uName));
+        if(s) {
+            document.getElementById('tTime').value = s.t || 300; document.getElementById('sTime').value = s.s || 5; 
+            document.getElementById('rCount').value = s.r || 4; document.getElementById('thSel').value = s.th || 0; 
+            document.getElementById('voiceToggle').checked = s.vt; 
+        }
+    } catch (e) {
+        db = db || {}; userLearned = userLearned || {}; userDifficult = userDifficult || {}; usedBgPool = usedBgPool || {};
+    }
+    updateTheme(); buildCategoryUI();
+}
+
+function saveUserFolder() {
+    const cats = Array.from(document.querySelectorAll('input[name="cats"]:checked')).map(c => c.value);
+    const bg = Array.from(document.querySelectorAll('input[name="bg_cats"]:checked')).map(c => c.value);
+    try {
+        localStorage.setItem("cfg_" + currentUser, JSON.stringify({
+            p: currentUser, t: document.getElementById('tTime').value, s: document.getElementById('sTime').value,
+            r: document.getElementById('rCount').value, th: document.getElementById('thSel').value,
+            vt: document.getElementById('voiceToggle').checked, c: cats, bg: bg
+        }));
+        localStorage.setItem("learned_" + currentUser, JSON.stringify(userLearned));
+        localStorage.setItem("diff_" + currentUser, JSON.stringify(userDifficult));
+        localStorage.setItem("bgpool_" + currentUser, JSON.stringify(usedBgPool));
+    } catch (e) {}
+}
+
+function handleFileSelect(input) {
+    const files = input.files; if (!files.length) return;
+    let loaded = 0;
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i]; const reader = new FileReader(); const cName = file.name.replace('.txt', '');
+        reader.onload = function(e) {
+            const arr = e.target.result.split(/[,;\n\r]+/).map(w => w.trim()).filter(w => w.length > 0);
+            if (arr.length) db[cName] = arr;
+            loaded++; 
+            if (loaded === files.length) { 
+                try { localStorage.setItem('trainer_custom_db', JSON.stringify(db)); } catch(err){}
+                buildCategoryUI(); 
+            }
+        };
+        reader.readAsText(file, "UTF-8");
+    }
+}
+
+function deleteDictionary(k) {
+    if (confirm("Видалити словник " + k + "?")) { delete db[k]; try{localStorage.setItem('trainer_custom_db', JSON.stringify(db));}catch(e){} buildCategoryUI(); saveS(); }
+}
+
+function buildCategoryUI() {
+    const cont = document.getElementById('catBox'); if (!cont) return;
+    if (!Object.keys(db).length) { cont.innerHTML = "Словники не завантажені"; return; }
+    cont.innerHTML = "<div style='display: contents; font-weight: bold; text-align: center;'><span style='text-align: left;'>Категорія</span><span>🎯 Ціль</span><span>Bg Фон</span><span>🗑️</span></div>";
+    const s = {};
+    try { Object.assign(s, JSON.parse(localStorage.getItem("cfg_" + currentUser)) || {}); } catch(e){}
+    Object.keys(db).forEach(k => {
+        let ic = s.c ? s.c.includes(k) : true; let ib = s.bg ? s.bg.includes(k) : true;
+        cont.innerHTML += "<span style='text-align: left; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;'><b>" + k + "</b> (" + (userLearned[k]?userLearned[k].length:0) + "/" + Object.keys(userDifficult[k]||{}).length + "/" + db[k].length + ")</span>" +
+            "<input type='checkbox' name='cats' value='" + k + "' " + (ic?'checked':'') + " onchange='saveS()' style='width:18px; height:18px; margin:auto; cursor:pointer;'>" +
+            "<input type='checkbox' name='bg_cats' value='" + k + "' " + (ib?'checked':'') + " onchange='saveS()' style='width:18px; height:18px; margin:auto; cursor:pointer;'>" +
+            "<button class='btn-del-sm' onclick='deleteDictionary(\"" + k + "\")'>❌</button>";
+    });
+}
+function saveS() { if (currentUser) saveUserFolder(); }
+function updateTheme() { document.getElementById('mainBody').className = 'theme-' + document.getElementById('thSel').value; }
+
+function getWordsFromSlidingWindow(cName) {
+    let all = db[cName] || [];
+    let actualBgSize = Math.min(600, all.length);
+    let base600 = all.slice(0, actualBgSize);
+    let learned = userLearned[cName] || [];
+    let unlearned = base600.filter(w => !learned.includes(w.toLowerCase()));
+    if (unlearned.length === 0 && base600.length > 0) {
+        userLearned[cName] = []; saveUserFolder(); unlearned = [...base600];
+    }
+    return unlearned;
+}
+
+function getBackgroundWords(cName) {
+    let all = db[cName] || [];
+    let actualBgSize = Math.min(600, all.length);
+    let base600 = all.slice(0, actualBgSize);
+    return { availableBg: base600, catName: cName };
+}
+
+function markBgWordAsUsed(cName, w) { }
+
+//5
+
+//5
+
+let trainingDurationSetting = 1000;
+
+function detectLanguage(text) {
+    return /[a-zA-Z]/.test(text) ? 'en-US' : 'uk-UA';
+}
+
+function computerSpeak(text, callback) {
+    try {
+        window.speechSynthesis.cancel(); 
+        let utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = detectLanguage(text);
+        utterance.rate = 0.85; 
+        if (callback) {
+            utterance.onend = function() { callback(); };
+        }
+        window.speechSynthesis.speak(utterance);
+    } catch(e) {
+        if (callback) callback(); 
+    }
+}
+
+function startGame() {
+    // 🔥 АДАПТАЦІЯ ДЛЯ ТЕЛЕФОНІВ: Пробуджуємо аудіо-рушій та мовлення у момент прямого кліку пальцем
+    try {
+        if (window.speechSynthesis) {
+            window.speechSynthesis.resume();
+        }
+        window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (window.SpeechRecognition) {
+            let probeMic = new window.SpeechRecognition();
+            probeMic.start();
+            probeMic.stop();
+        }
+    } catch(e) {}
+
+    const newNameInput = document.getElementById('newPName').value.trim();
+    if (newNameInput.length > 0) {
+        if (users.includes(newNameInput)) { return alert("Користувач з таким ім'ям вже існує!"); }
+        users.push(newNameInput); currentUser = newNameInput;
+        try {
+            localStorage.setItem('chicom_users_list', JSON.stringify(users));
+            localStorage.setItem('chicom_current_user', currentUser);
+        } catch(e){}
+        document.getElementById('newPName').value = "";
+        rebuildUserSelect(); saveUserFolder(); loadUserFolder(currentUser);
+    } else {
+        const sel = document.getElementById('userSelect'); if (sel) currentUser = sel.value;
+    }
+    const sel = Array.from(document.querySelectorAll('input[name="cats"]:checked')).map(c => c.value);
+    if(!sel.length) return alert("Оберіть хоча б одну категорію для цілі пошуку (🎯 Ціль)!");
+    saveUserFolder();
+
+    const micToggleEl = document.getElementById('micListenToggle');
+    isMicActiveGlobal = micToggleEl ? micToggleEl.checked : true;
+    const micDelayEl = document.getElementById('micDelayTime');
+    micDelayGlobal = micDelayEl ? (parseInt(micDelayEl.value) || 600) : 600;
+
+    catNow = sel[Math.floor(Math.random() * sel.length)]; 
+    let targetList = getWordsFromSlidingWindow(catNow);
+    pool = [...targetList].sort(() => Math.random() - 0.5);
+    stats = {ok:0, err:0, skip:0}; 
+    totalTasksCounter = 0;
+    delayedQueue = []; 
+    isWaitingAfterError = false; 
+    sessionProtocol = []; wordsSeenTarget = []; wordsSeenBackground = []; focusTestResults = []; peripheralTestResults = [];
+    upUI();
+    document.getElementById('setup').classList.add('hidden'); 
+    document.getElementById('game').classList.remove('hidden');
+    trainingDurationSetting = parseInt(document.getElementById('tTime').value) || 300; 
+    document.getElementById('g-timer').innerText = trainingDurationSetting;
+    let t = trainingDurationSetting;
+    gT = setInterval(() => { t--; document.getElementById('g-timer').innerText = t; if(t<=0) finishTrainingSession(); }, 1000);
+    next(true); 
+}
+
+function next(isFirst = false) {
+    beep(440, 0.08); 
+    isWaitingAfterError = false; 
+ 
+    if (micTimeout) { clearTimeout(micTimeout); }
+    if (recognition) { try { recognition.stop(); } catch(e){} }
+
+    const monitor = document.getElementById('mic-heard-monitor');
+    if (monitor) monitor.innerText = "Очікування вимови...";
+
+    if (!isFirst) { totalTasksCounter++; } 
+    let targetList = getWordsFromSlidingWindow(catNow);
+    if (!pool.length) { pool = [...targetList].sort(() => Math.random() - 0.5); }
+    let isFromQueue = false;
+    let delayedIndex = delayedQueue.findIndex(q => q.triggerStep === totalTasksCounter);
+    if (delayedIndex !== -1) {
+        targetW = delayedQueue[delayedIndex].word;
+        delayedQueue.splice(delayedIndex, 1); 
+        isFromQueue = true;
+    } else {
+        targetW = pool.pop();
+    }
+    if (!targetW) { finishTrainingSession(); return; }
+    targetW = targetW.toString().replace(/[\r\n]+/g, "").trim();
+    if (!wordsSeenTarget.includes(targetW)) { wordsSeenTarget.push(targetW); }
+    document.getElementById('target-instr').innerText = "ЗНАЙДИ: " + catNow.toUpperCase();
+    const cont = document.getElementById('words-cont'); cont.innerHTML = '';
+    let displaySet = [{w:targetW, ok:true}]; let backgroundWords = []; 
+    const bgSel = Array.from(document.querySelectorAll('input[name="bg_cats"]:checked')).map(c => c.value);
+    bgSel.forEach(c => { 
+        if(db[c]) { 
+            let bgData = getBackgroundWords(c); 
+            let fBg = bgData.availableBg.filter(w => w.toLowerCase() !== targetW.toLowerCase()); 
+            backgroundWords = backgroundWords.concat(fBg.map(w => ({word: w, cat: c}))); 
+        } 
+    });
+    if (backgroundWords.length === 0) {
+        backgroundWords = targetList.filter(w => w.toLowerCase() !== targetW.toLowerCase()).map(w => ({word: w, cat: catNow}));
+    }
+    let currentStepBgWords = []; let rCountVal = parseInt(document.getElementById('rCount').value) || 4;
+    while(displaySet.length < rCountVal && backgroundWords.length > 0) {
+        let rIndex = Math.floor(Math.random() * backgroundWords.length); let rObj = backgroundWords[rIndex];
+        if(!displaySet.find(x => x.w === rObj.word)) {
+            displaySet.push({w:rObj.word, ok:false}); currentStepBgWords.push(rObj.word);
+            if (!wordsSeenBackground.includes(rObj.word)) { wordsSeenBackground.push(rObj.word); }
+            markBgWordAsUsed(rObj.cat, rObj.word); 
+        }
+        backgroundWords.splice(rIndex, 1);
+    }
+    sessionProtocol.push({ step: totalTasksCounter + 1, type: isFromQueue ? "Черга (7/15)" : "Пул", target: targetW, bgWords: currentStepBgWords.join(", "), result: "Пропуск", time: 0 });
+    displaySet.sort(() => Math.random() - 0.5);
+    
+    displaySet.forEach(o => {
+        const d = document.createElement('div'); d.className = 'word-card'; d.innerText = o.w; if(o.ok) d.id = "target-card";
+        d.onclick = () => { 
+            if (isWaitingAfterError) return;
+            
+            let currentElapsed = performance.now() - wordStartTime;
+            if (currentElapsed < 600) return; 
+            
+            let reactionTime = Math.round(currentElapsed);
+            sessionProtocol[sessionProtocol.length - 1].time = reactionTime;
+            
+            if (recognition) { try { recognition.stop(); } catch(e){} }
+            
+            if(o.ok) { 
+                sessionProtocol[sessionProtocol.length - 1].result = "Успіх"; 
+                computerSpeak(targetW, function() { handleSuccessWord(); });
+            } 
+            else { 
+                sessionProtocol[sessionProtocol.length - 1].result = "Помилка"; 
+                computerSpeak(targetW, function() { handleProcessError(); });
+            } 
+        };
+        cont.appendChild(d);
+    });
+    const sT = parseInt(document.getElementById('sTime').value);
+    document.getElementById('timer-runner').style.left = "0%"; wordStartTime = performance.now(); runTimer(sT, sT); 
+
+    if (isMicActiveGlobal) {
+        micTimeout = setTimeout(function() {
+            if (isWaitingAfterError) return;
+            
+            window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!window.SpeechRecognition) return; 
+
+            recognition = new window.SpeechRecognition();
+            recognition.continuous = true; 
+            recognition.interimResults = false;
+            recognition.lang = detectLanguage(targetW);
+
+            recognition.onresult = function(event) {
+                if (isWaitingAfterError) return;
+                
+                let lastIdx = event.results.length - 1;
+                if (event.results && event.results[lastIdx]) {
+                    let spoken = event.results[lastIdx].transcript.trim().toUpperCase();
+                    spoken = spoken.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"").trim();
+
+                    if (monitor) { monitor.innerText = "Почув: \"" + spoken + "\""; }
+
+                    if (spoken === targetW.toUpperCase()) {
+                        let voiceElapsed = performance.now() - wordStartTime;
+                        sessionProtocol[sessionProtocol.length - 1].time = Math.round(voiceElapsed);
+                        sessionProtocol[sessionProtocol.length - 1].type += " (Голос)";
+                        sessionProtocol[sessionProtocol.length - 1].result = "Успіх";
+                        
+                        if (recognition) { try { recognition.stop(); } catch(e){} }
+                        
+                        const targetCard = document.getElementById('target-card');
+                        if (targetCard) targetCard.style.backgroundColor = "var(--green)";
+
+                        computerSpeak(targetW, function() {
+                            setTimeout(function() { handleSuccessWord(); }, 300); 
+                        });
+                    }
+                }
+            };
+
+            try { recognition.start(); } catch(e){}
+        }, micDelayGlobal);
+    }
+}
+
+//6
+
+//6
+
+function handleSuccessWord() {
+    clearTimeout(pT); stats.ok++;
+    let cleanTarget = targetW.toLowerCase().trim();
+    if (userDifficult[catNow] && userDifficult[catNow][cleanTarget]) {
+        userDifficult[catNow][cleanTarget]--; if (userDifficult[catNow][cleanTarget] <= 0) { delete userDifficult[catNow][cleanTarget]; }
+    }
+    if (!userLearned[catNow]) { userLearned[catNow] = []; }
+    if (!userLearned[catNow].includes(cleanTarget)) { userLearned[catNow].push(cleanTarget); }
+    saveUserFolder(); upUI(); next();
+}
+
+function runTimer(total, green) {
+    clearTimeout(pT); 
+    document.getElementById('zone-green').style.width = "100%"; 
+    document.getElementById('zone-red').style.width = "0%"; 
+    document.getElementById('zone-red').style.left = "100%";
+    document.getElementById('timer-runner').style.left = "0%";
+    
+    wordStartTime = performance.now(); 
+    let msTotal = total * 300; 
+
+    pT = setTimeout(function() {
+        if (isWaitingAfterError) return;
+        stats.skip++; 
+        sessionProtocol[sessionProtocol.length - 1].result = "Пропуск (Таймаут)"; 
+        sessionProtocol[sessionProtocol.length - 1].time = msTotal;
+        
+        // 🔥 ТАЙМІНГ ПРОПУСКУ: При таймауті комп'ютер читає правильну версію, підсвічує рамку і чекає 2 секунди
+        if (micTimeout) { clearTimeout(micTimeout); }
+        if (recognition) { try { recognition.stop(); } catch(e){} }
+        
+        const card = document.getElementById('target-card'); if(card) card.classList.add('highlight-target');
+        isWaitingAfterError = true;
+        
+        computerSpeak(targetW, function() {
+            setTimeout(function() { 
+                if(card) card.classList.remove('highlight-target'); 
+                handleSuccessWord(); 
+            }, 2000);
+        });
+    }, msTotal);
+}
+
+function planDelayedWord(word) {
+    let cleanWord = word.toString().trim();
+    delayedQueue.push({ word: cleanWord, triggerStep: totalTasksCounter + 7 });
+    delayedQueue.push({ word: cleanWord, triggerStep: totalTasksCounter + 15 });
+}
+
+function handleProcessError() {
+    clearTimeout(pT); isWaitingAfterError = true; 
+    if (micTimeout) { clearTimeout(micTimeout); }
+    if (recognition) { try { recognition.stop(); } catch(e){} }
+
+    beep(250, 0.15); setTimeout(function() { beep(200, 0.2); }, 150); stats.err++; 
+    let cleanTarget = targetW.toLowerCase().trim();
+    if (!userDifficult[catNow]) { userDifficult[catNow] = {}; }
+    let currentWeight = userDifficult[catNow][cleanTarget] || 0;
+    userDifficult[catNow][cleanTarget] = (currentWeight === 0) ? 3 : currentWeight + 2;
+    planDelayedWord(targetW); saveUserFolder(); upUI();
+    const card = document.getElementById('target-card'); if(card) card.classList.add('highlight-target');
+    
+    // 🔥 ТАЙМІНГ ПОМИЛКИ: Комп'ютер читає еталон і тримає червону картку рівно 2 секунди після промови
+    computerSpeak(targetW, function() {
+        setTimeout(function() { if(card) card.classList.remove('highlight-target'); next(); }, 2000);
+    });
+}
+
+function sendToVocabularyActive() {
+    if (isWaitingAfterError || !targetW) return;
+    clearTimeout(pT); isWaitingAfterError = true; stats.skip++;
+    if (micTimeout) { clearTimeout(micTimeout); }
+    if (recognition) { try { recognition.stop(); } catch(e){} }
+
+    sessionProtocol[sessionProtocol.length - 1].result = "Скинуто в Словник"; sessionProtocol[sessionProtocol.length - 1].time = Math.round(performance.now() - wordStartTime);
+    let cleanTarget = targetW.toLowerCase().trim();
+    if (!userDifficult[catNow]) { userDifficult[catNow] = {}; }
+    let currentWeight = userDifficult[catNow][cleanTarget] || 0;
+    userDifficult[catNow][cleanTarget] = (currentWeight === 0) ? 3 : currentWeight + 2;
+    planDelayedWord(targetW); saveUserFolder(); upUI();
+    const card = document.getElementById('target-card'); if(card) card.classList.add('highlight-target');
+    
+    computerSpeak(targetW, function() {
+        setTimeout(function() { if(card) card.classList.remove('highlight-target'); next(); }, 1200);
+    });
+}
+
+function finishTrainingSession() {
+    // 1. Примусово зупиняємо голосовий двигун Chrome, щоб звуковий ряд миттєво затих
+    try {
+        if (window.speechSynthesis) {
+            window.speechSynthesis.cancel();
+        }
+    } catch(e) {}
+
+    // 2. Негайно зупиняємо загальний лічильник часу та таймер кроку
+    if (gT) { clearInterval(gT); gT = null; }
+    if (pT) { clearTimeout(pT); pT = null; }
+    
+    // 3. Ховаємо ігрове вікно
+    const gameScreen = document.getElementById('game');
+    if (gameScreen) gameScreen.classList.add('hidden');
+    
+    // 4. Безпечно вимикаємо мікрофонний тракт
+    try {
+        if (micTimeout) { clearTimeout(micTimeout); micTimeout = null; }
+        if (recognition) { recognition.stop(); recognition = null; }
+    } catch(e) {}
+
+   
+   
+    totalTestScreens = (trainingDurationSetting <= 200) ? 4 : 6; currentScreenIndex = 0;
+    allMemoryTestWords = []; focusTestResults = []; peripheralTestResults = [];
+    let focusHalf = totalTestScreens / 2; let focusPool = [];
+    let seenTargetSample = [...wordsSeenTarget].sort(function() { return Math.random() - 0.5; });
+    let allRelevant = db[catNow] || [];
+    let unseenRelevant = allRelevant.filter(function(w) { return !wordsSeenTarget.includes(w) && !wordsSeenBackground.includes(w); }).sort(function() { return Math.random() - 0.5; });
+    for (let i = 0; i < focusHalf * 10; i++) {
+        if (i % 2 === 0 && seenTargetSample.length > 0) { focusPool.push({ word: seenTargetSample.pop(), wasPresent: true, mode: "focus" }); } 
+        else if (unseenRelevant.length > 0) { focusPool.push({ word: unseenRelevant.pop(), wasPresent: false, mode: "focus" }); } 
+        else if (seenTargetSample.length > 0) { focusPool.push({ word: seenTargetSample.pop(), wasPresent: true, mode: "focus" }); }
+    }
+    for (let s = 0; s < focusHalf; s++) {
+        let chunk = focusPool.slice(s * 10, (s + 1) * 10).sort(function() { return Math.random() - 0.5; }); allMemoryTestWords = allMemoryTestWords.concat(chunk);
+    }
+    let bgPool = []; let seenBgSample = [...wordsSeenBackground].sort(function() { return Math.random() - 0.5; });
+    let otherCats = Object.keys(db).filter(function(c) { return c !== catNow; }); let nonRelevantPure = [];
+    otherCats.forEach(function(c) { nonRelevantPure = nonRelevantPure.concat(db[c]); });
+    nonRelevantPure = nonRelevantPure.filter(function(w) { return !wordsSeenTarget.includes(w) && !wordsSeenBackground.includes(w); }).sort(function() { return Math.random() - 0.5; });
+    for (let i = 0; i < focusHalf * 10; i++) {
+        if (i % 2 === 0 && seenBgSample.length > 0) { bgPool.push({ word: seenBgSample.pop(), wasPresent: true, mode: "peripheral" }); } 
+        else if (nonRelevantPure.length > 0) { bgPool.push({ word: nonRelevantPure.pop(), wasPresent: false, mode: "peripheral" }); } 
+        else if (seenBgSample.length > 0) { bgPool.push({ word: seenBgSample.pop(), wasPresent: true, mode: "peripheral" }); }
+    }
+    for (let s = 0; s < focusHalf; s++) {
+        let chunk = bgPool.slice(s * 10, (s + 1) * 10).sort(function() { return Math.random() - 0.5; }); allMemoryTestWords = allMemoryTestWords.concat(chunk);
+    }
+    if (allMemoryTestWords.length < 10) { endAll(); return; }
+    document.getElementById('test-screen').classList.remove('hidden'); renderTestScreen();
+}
+
+//7
+
+function renderTestScreen() {
+    clearTimeout(testTimer);
+    let screenStartIdx = currentScreenIndex * 10;
+    currentScreenWords = allMemoryTestWords.slice(screenStartIdx, screenStartIdx + 10);
+    if (currentScreenWords.length < 10) { endAll(); return; }
+    
+    currentTestMode = currentScreenWords[0].mode; 
+    currentWordIndexInScreen = 0;
+    
+    document.getElementById('test-screen-counter').innerText = 'Екран ' + (currentScreenIndex + 1) + ' з ' + totalTestScreens;
+    if (currentTestMode === "focus") {
+        document.getElementById('test-title').innerText = "Чи були ці релевантні слова у попередньому сеансі?";
+    } else {
+        document.getElementById('test-title').innerText = "Чи були ці нерелевантні слова у попередньому сеансі?";
+    }
+    
+    const grid = document.getElementById('test-grid'); grid.innerHTML = "";
+    currentScreenWords.forEach((item, idx) => {
+        const row = document.createElement('div'); row.id = 'test-row-' + idx;
+        row.className = 'test-row ' + (currentTestMode === "focus" ? "row-relevant": "row-peripheral");
+        row.innerText = item.word; grid.appendChild(row);
+    });
+    activateWordInScreen();
+}
+
+function activateWordInScreen() {
+    clearTimeout(testTimer);
+    for (let i = 0; i < 10; i++) {
+        const r = document.getElementById('test-row-' + i); if (r) r.classList.remove('row-active');
+    }
+    if (currentWordIndexInScreen >= 10) {
+        currentScreenIndex++;
+        if (currentScreenIndex >= totalTestScreens) { endAll(); } else { renderTestScreen(); }
+        return;
+    }
+    const activeRow = document.getElementById('test-row-' + currentWordIndexInScreen);
+    if (activeRow) { activeRow.classList.add('row-active'); }
+    testWordStartTime = performance.now();
+    testTimer = setTimeout(() => { processTestAnswer(3, true); }, 5000);
+}
+
+function pressTestButton(choice) { processTestAnswer(choice, false); }
+
+function processTestAnswer(choice, isTimeout = false) {
+    clearTimeout(testTimer);
+    let reactionTime = isTimeout ? 5000 : Math.round(performance.now() - testWordStartTime);
+    let currentItem = currentScreenWords[currentWordIndexInScreen];
+    let evaluation = "не пам'ятає";
+    if (!isTimeout && choice === 1) { evaluation = currentItem.wasPresent ? "вірно" : "не вірно"; } 
+    else if (!isTimeout && choice === 2) { evaluation = !currentItem.wasPresent ? "вірно" : "не вірно"; }
+    const activeRow = document.getElementById('test-row-' + currentWordIndexInScreen);
+    if (activeRow) {
+        activeRow.classList.remove('row-active');
+        if (evaluation === "вірно") activeRow.classList.add('ans-correct');
+        else if (evaluation === "не вірно") activeRow.classList.add('ans-wrong');
+        else activeRow.classList.add('ans-dontknow');
+    }
+    let record = { word: currentItem.word, wasPresent: currentItem.wasPresent, userAnswer: choice, status: evaluation, time: reactionTime };
+    if (currentTestMode === "focus") { focusTestResults.push(record); } else { peripheralTestResults.push(record); }
+    currentWordIndexInScreen++;
+    setTimeout(() => { activateWordInScreen(); }, 250);
+}
+
+//8
+
+//8
+
+function generateMemoryAnalyticsHTML(title, records) {
+    let statsTemplate = function() { return { count: 0, v_count: 0, v_time: 0, nv_count: 0, nv_time: 0, np_count: 0, np_time: 0 }; };
+    let presentData = statsTemplate(); let absentData = statsTemplate();
+    records.forEach(function(r) {
+        let data = r.wasPresent ? presentData : absentData; data.count++;
+        if (r.status === "вірно") { data.v_count++; data.v_time += r.time; }
+        else if (r.status === "не вірно") { data.nv_count++; data.nv_time += r.time; }
+        else { data.np_count++; data.np_time += r.time; }
+    });
+    let avg = function(total, count) { return count > 0 ? Math.round(total / count) + " мс" : "-"; };
+    return '<div class="stat-block">' +
+        '<div class="stat-title">' + title + '</div>' +
+        '<table style="margin-top:5px; margin-bottom:10px;">' +
+            '<tr><th>Категорія слів</th><th>Метрика</th><th>Вірно (✅)</th><th>Не вірно (❌)</th><th>Не пам\'ятаю (⏳)</th></tr>' +
+            '<tr>' +
+                /* 🔥 ВИПРАВЛЕНО ЗБІЙ: Прибрано світле тло комірки, задано чіткий світлий колір для назви категорії */
+                '<td rowspan="2" style="font-weight:bold; color:#5dade2; border-right:1px solid #444;">МІСТИЛИСЯ у сеансі</td>' +
+                '<td>Кількість слів (Всього: ' + presentData.count + ')</td><td><b>' + presentData.v_count + '</b></td><td><b>' + presentData.nv_count + '</b></td><td><b>' + presentData.np_count + '</b></td>' +
+            '</tr>' +
+            '<tr><td>Сер. час відповіді</td><td>' + avg(presentData.v_time, presentData.v_count) + '</td><td>' + avg(presentData.nv_time, presentData.nv_count) + '</td><td>' + avg(presentData.np_time, presentData.np_count) + '</td></tr>' +
+            '<tr>' +
+                /* 🔥 ВИПРАВЛЕНО ЗБІЙ: Прибрано світле тло комірки, задано чіткий світлий колір для назви категорії */
+                '<td rowspan="2" style="font-weight:bold; color:#5dade2; border-right:1px solid #444;">НЕ ЗУСТРІЧАЛИСЯ</td>' +
+                '<td>Кількість слів (Всього: ' + absentData.count + ')</td><td><b>' + absentData.v_count + '</b></td><td><b>' + absentData.nv_count + '</b></td><td><b>' + absentData.np_count + '</b></td>' +
+            '</tr>' +
+            '<tr><td>Сер. час відповіді</td><td>' + avg(absentData.v_time, absentData.v_count) + '</td><td>' + avg(absentData.nv_time, absentData.nv_count) + '</td><td>' + avg(absentData.np_time, absentData.np_count) + '</td></tr>' +
+        '</table>' +
+    '</div>';
+}
+
+function exportDictionary() {
+    if (!currentUser) return;
+    let data = userDifficult;
+    let fileContent = "==================================================\n  СЛОВНИК СЛІВ ДЛЯ ОПРАЦЮВАННЯ УЧНЯ: " + currentUser.toUpperCase() + "\n==================================================\n\n";
+    let hasData = false;
+    Object.keys(data).forEach(function(cat) {
+        let words = Object.keys(data[cat]);
+        if (words.length > 0) {
+            hasData = true; fileContent += "📂 КАТЕГОРІЯ: " + cat.toUpperCase() + "\n--------------------------------------------------\n";
+            words.forEach(function(w, idx) { fileContent += (idx + 1) + ". [ ] " + w.toUpperCase() + " (Залишилось повторень: " + data[cat][w] + ")\n"; });
+            fileContent += "\n";
+        }
+    });
+    if (!hasData) { fileContent += "Наразі словник складних слів порожній."; }
+    const blob = new Blob([fileContent], { type: "text/plain;charset=utf-8" });
+    const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = currentUser.toLowerCase() + "_dictionary.txt"; link.click();
+}
+
+function upUI() { 
+    document.getElementById('cnt-ok').innerText = stats.ok; 
+    document.getElementById('cnt-err').innerText = stats.err; 
+    document.getElementById('cnt-skip').innerText = stats.skip; 
+}
+
+function endAll() {
+    clearTimeout(testTimer);
+    document.getElementById('test-screen').classList.add('hidden');
+    document.getElementById('final-stats').classList.remove('hidden');
+    document.getElementById('res-user-name').innerText = currentUser;
+    let focusHTML = generateMemoryAnalyticsHTML("📊 Результати тесту: Пам’ять у фокусі уваги", focusTestResults);
+    let peripheralHTML = generateMemoryAnalyticsHTML("📊 Результати тесту: Пам’ять на периферії уваги", peripheralTestResults);
+    document.getElementById('testResultsContainer').innerHTML = focusHTML + peripheralHTML;
+    let protoHTML = '<table><tr style="background:#ebf5fb;"><th>Крок №</th><th>Джерело слова</th><th>Цільове слово (Фокус)</th><th>Фонові слова (Периферія)</th><th>Результат дії</th><th>Час відповіді</th></tr>';
+    sessionProtocol.forEach(function(p) {
+        let resColor = p.result === "Успіх" ? "#27ae60" : (p.result === "Помилка" ? "#e74c3c" : "#e67e22");
+        protoHTML += '<tr><td>' + p.step + '</td><td>' + p.type + '</td><td><b>' + p.target.toUpperCase() + '</b></td><td style="text-align:left; color:#555;">' + p.bgWords + '</td><td style="font-weight:bold; color:' + resColor + ';">' + p.result + '</td><td><b>' + p.time + ' мс</b></td></tr>';
+    });
+    protoHTML += '</table>'; document.getElementById('protocolTableContainer').innerHTML = protoHTML;
+    let now = new Date();
+    let entry = { d: now.toLocaleDateString(), t: now.toLocaleTimeString().slice(0,5), cat: catNow, rows: document.getElementById('rCount').value, total: stats.ok + stats.err + stats.skip, ok: stats.ok, err: stats.err, skip: stats.skip };
+    let history = []; try { history = JSON.parse(localStorage.getItem('chicom_history_' + currentUser) || "[]"); } catch(e) { history = []; }
+    history.push(entry); if(history.length > 50) history.shift(); try { localStorage.setItem('chicom_history_' + currentUser, JSON.stringify(history)); } catch(e) {}
+    let histHTML = '<table><tr><th>Дата</th><th>Час</th><th>Учень</th><th>Категорія</th><th>Рядків у тесті</th><th>Всього</th><th>✅</th><th>❌</th><th>⏳</th></tr>';
+    history.slice(-10).reverse().forEach(function(h) { histHTML += '<tr><td>' + h.d + '</td><td>' + h.t + '</td><td><b>' + currentUser + '</b></td><td>' + h.cat + '</td><td>' + h.rows + '</td><td>' + h.total + '</td><td>' + h.ok + '</td><td>' + h.err + '</td><td>' + h.skip + '</td></tr>'; });
+    document.getElementById('historyTableContainer').innerHTML = histHTML + '</table>';
+}
+window.onload = function() { initUserSystem(); };
+</script>
+</body>
+</html>
+
