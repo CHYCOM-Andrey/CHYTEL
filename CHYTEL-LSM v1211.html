@@ -321,7 +321,7 @@ function markBgWordAsUsed(cName, w) { }
 
 //5
 
-let trainingDurationSetting = 300;
+let trainingDurationSetting = 1000;
 
 function detectLanguage(text) {
     return /[a-zA-Z]/.test(text) ? 'en-US' : 'uk-UA';
@@ -552,7 +552,7 @@ function runTimer(total, green) {
             setTimeout(function() { 
                 if(card) card.classList.remove('highlight-target'); 
                 handleSuccessWord(); 
-            }, 1000);
+            }, 2000);
         });
     }, msTotal);
 }
