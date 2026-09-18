@@ -602,22 +602,28 @@ function sendToVocabularyActive() {
 }
 
 function finishTrainingSession() {
-    // 1. Негайно та беззастережно зупиняємо загальний таймер, щоб звукоряд затих
+    // 1. Примусово зупиняємо голосовий двигун Chrome, щоб звуковий ряд миттєво затих
+    try {
+        if (window.speechSynthesis) {
+            window.speechSynthesis.cancel();
+        }
+    } catch(e) {}
+
+    // 2. Негайно зупиняємо загальний лічильник часу та таймер кроку
     if (gT) { clearInterval(gT); gT = null; }
     if (pT) { clearTimeout(pT); pT = null; }
     
-    // 2. Ховаємо екран гри
+    // 3. Ховаємо ігрове вікно
     const gameScreen = document.getElementById('game');
     if (gameScreen) gameScreen.classList.add('hidden');
     
-    // 3. Безпечно, через блок try-catch, глушимо слуховий тракт
+    // 4. Безпечно вимикаємо мікрофонний тракт
     try {
         if (micTimeout) { clearTimeout(micTimeout); micTimeout = null; }
         if (recognition) { recognition.stop(); recognition = null; }
-    } catch(e) {
-        console.log("Мікрофон уже був вимкнений");
-    }
+    } catch(e) {}
 
+   
    
     totalTestScreens = (trainingDurationSetting <= 200) ? 4 : 6; currentScreenIndex = 0;
     allMemoryTestWords = []; focusTestResults = []; peripheralTestResults = [];
