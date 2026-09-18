@@ -379,7 +379,7 @@ function startGame() {
     trainingDurationSetting = parseInt(document.getElementById('tTime').value) || 300; 
     document.getElementById('g-timer').innerText = trainingDurationSetting;
     let t = trainingDurationSetting;
-    gT = setInterval(() => { t--; document.getElementById('g-timer').innerText = t; if(t<=0) finishTrainingSession(); }, 1000);
+    gT = setInterval(() => { t--; document.getElementById('g-timer').innerText = t; if(t<=0) finishTrainingSession(); }, 350);
     next(true); 
 }
 
@@ -498,7 +498,7 @@ function next(isFirst = false) {
 
                         setTimeout(function() {
                             computerSpeak(targetW, function() {
-                                setTimeout(function() { handleSuccessWord(); }, 1000);
+                                setTimeout(function() { handleSuccessWord(); }, 300);
                             });
                         }, 200);
                     }
@@ -533,7 +533,7 @@ function runTimer(total, green) {
     document.getElementById('timer-runner').style.left = "0%";
     
     wordStartTime = performance.now(); 
-    let msTotal = total * 1000; 
+    let msTotal = total * 300; 
 
     pT = setTimeout(function() {
         if (isWaitingAfterError) return;
@@ -552,7 +552,7 @@ function runTimer(total, green) {
             setTimeout(function() { 
                 if(card) card.classList.remove('highlight-target'); 
                 handleSuccessWord(); 
-            }, 2000);
+            }, 400);
         });
     }, msTotal);
 }
